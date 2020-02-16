@@ -1,35 +1,61 @@
-const path = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
+const path = require('path');
+const webpack = require('webpack');
+const stylusLoader = require('stylus-loader');
+const stylus_plugin = require('poststylus');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-    entry: './src/index.tsx',
+    entry: [
+        './src/index.tsx'
+    ],
     output: {
-        path: path.resolve(__dirname, "build"),
-        filename: "bundle.js"
+        path: path.resolve(__dirname, 'build'),
+        filename: 'bundle.js'
     },
     module: {
         rules: [
             {
                 test: /\.tsx?$/,
-                loader: "awesome-typescript-loader"
+                loader: 'awesome-typescript-loader'
             },
             {
-                enforce: "pre",
+                enforce: 'pre',
                 test: /\.js$/,
-                loader: "source-map-loader"
-            }
+                loader: 'source-map-loader'
+            },
+            {
+                test: /\.css$/,
+                loaders: ['style-loader', 'css-loader']
+            },
+            {
+                test: /\.styl$/,
+                loader: 'style-loader!css-loader!stylus-loader',
+            },
+            {
+                test: /\.(woff|woff2|ttf|eot|ico)$/,
+                loader: 'file-loader'
+            },
         ]
     },
     plugins: [
         new HtmlWebpackPlugin({
-            template: "./index.html"
-        })
+            template: './index.html'
+        }),
+        new stylusLoader.OptionsPlugin({
+            default: {
+                use: [stylus_plugin()],
+            },
+        }),
+        new webpack.HotModuleReplacementPlugin(),
     ],
-    devtool: "source-map",
+    devtool: 'source-map',
     resolve: {
-        extensions: [".js", ".ts", ".tsx"]
+        extensions: ['.js', '.ts', '.tsx']
     },
     devServer: {
+        port: 3000,
+        host: '0.0.0.0',
+        hot: true,
         proxy: {
             '/api': {
                 target: 'https://che.openshift.io/',

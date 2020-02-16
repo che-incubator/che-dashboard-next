@@ -15,12 +15,12 @@ Che Dashboard
 
 Install all modules listed as dependencies in package.json
 ```sh
-$ npm install
+$ yarn
 ```
 
 Start dev-server
 ```sh
-$ npm start
+$ yarn start
 ```
 
 It will launch the server and then the project can be tested on http://localhost:3000
