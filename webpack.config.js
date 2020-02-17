@@ -30,11 +30,7 @@ module.exports = {
             {
                 test: /\.styl$/,
                 loader: 'style-loader!css-loader!stylus-loader',
-            },
-            {
-                test: /\.(woff|woff2|ttf|eot|ico)$/,
-                loader: 'file-loader'
-            },
+            }
         ]
     },
     plugins: [
@@ -55,6 +51,7 @@ module.exports = {
     devServer: {
         port: 3000,
         host: '0.0.0.0',
+        inline: true,
         hot: true,
         proxy: {
             '/api': {

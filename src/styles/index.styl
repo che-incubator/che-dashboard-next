@@ -1,8 +1,8 @@
 body
   font-family: Helvetica, Arial, sans-serif
   font-size: 24px
-  color: white
-  background-color: black
+  color: #fff
+  background-color: #000
 
 .main-page-loader
   position: absolute
@@ -11,33 +11,26 @@ body
   left: 0
   right: 0
   margin: auto
-  color: #fff
-  background-color: #000
   z-index: 80
 
-.main-page-loader .ide-page-loader-content img {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  margin: auto;
-}
+.main-page-loader .ide-page-loader-content img
+  position: fixed
+  top: 0
+  bottom: 0
+  left: 0
+  right: 0
+  margin: auto
 
-.ide-page-loader-content img {
-  max-width: 140px;
-  max-height: 140px;
-  animation-name: opacity;
-  animation-duration: 2s;
-  animation-iteration-count: infinite;
-  animation-timing-function: ease-in-out;
-}
+.ide-page-loader-content img
+  max-width: 140px
+  max-height: 140px
+  animation-name: opacity
+  animation-duration: 2s
+  animation-iteration-count: infinite
+  animation-timing-function: ease-in-out
 
-@keyframes opacity {
-  0%, 100% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 1;
-  }
-}
+@keyframes opacity
+  0%, 100%
+    opacity: 0
+  50%
+    opacity: 1

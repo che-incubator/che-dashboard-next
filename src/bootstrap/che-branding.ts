@@ -14,6 +14,8 @@ interface IRejectFn<T> {
     (reason?: any): void;
 }
 
+export type IBranding = { [key: string]: string | Object };
+
 const BRANDING_SERVICE_SYMBOL = Symbol('CheBranding');
 const ASSET_PREFIX = 'dashboard/assets/branding/';
 
@@ -64,7 +66,7 @@ export class CheBranding {
         });
     }
 
-    get all(): { [key: string]: string | Object } {
+    get all(): IBranding {
         return {
             title: this.getProductName(),
             name: this.getName(),

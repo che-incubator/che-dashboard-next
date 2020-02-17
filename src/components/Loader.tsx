@@ -1,20 +1,14 @@
 import * as React from 'react';
+import {useSelector} from 'react-redux';
 
-interface IProps {
-    src: string;
+function Loader() {
+    const branding = useSelector((state: { branding: { loaderURL: string } }) => state.branding);
+
+    return <div className="main-page-loader">
+        <div className="ide-page-loader-content">
+            <img src={branding.loaderURL}/>
+        </div>
+    </div>;
 }
 
-export class Loader extends React.Component<IProps, any> {
-
-    constructor(props: IProps) {
-        super(props);
-    }
-
-    render() {
-        return <div className="main-page-loader">
-            <div className="ide-page-loader-content">
-                <img src={this.props.src}/>
-            </div>
-        </div>;
-    }
-}
+export default Loader;
