@@ -1,3 +1,7 @@
+import 'reflect-metadata';
+import axios from 'axios';
+import {injectable} from 'inversify';
+
 import {
     BRANDING_DEFAULT,
     IBrandingConfiguration,
@@ -5,37 +9,30 @@ import {
     IBrandingFooter,
     IBrandingWorkspace
 } from './branding.constant'
+import * as $ from 'jquery';
 
-interface IResolveFn<T> {
-    (value?: T | PromiseLike<T>): void;
+type IResolveFn<T> = {
+    (value?: T | PromiseLike<T>): void
 }
 
-interface IRejectFn<T> {
-    (reason?: any): void;
+type IRejectFn<T> = {
+    (reason?: any): void
 }
 
 export type IBranding = { [key: string]: string | Object };
 
-const BRANDING_SERVICE_SYMBOL = Symbol('CheBranding');
 const ASSET_PREFIX = 'dashboard/assets/branding/';
 
 /**
  * This class is handling the branding data.
  * @author Oleksii Orel
  */
+@injectable()
 export class CheBranding {
     private branding = BRANDING_DEFAULT;
     private readonly readyPromise: Promise<void>;
 
-    static get(): CheBranding {
-        const global = window as any; // tslint:disable-line
-        return global[BRANDING_SERVICE_SYMBOL] || new CheBranding();
-    }
-
-    protected constructor() {
-        const global = window as any; // tslint:disable-line
-        global[BRANDING_SERVICE_SYMBOL] = this;
-
+    constructor() {
         this.readyPromise = this.updateData();
     }
 
@@ -47,22 +44,29 @@ export class CheBranding {
      * Update branding data.
      */
     private updateData(): Promise<void> {
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', `${ASSET_PREFIX}product.json`);
         return new Promise<void>((resolve: IResolveFn<void>, reject: IRejectFn<void>) => {
-            xhr.send();
-            xhr.onreadystatechange = () => {
-                if (xhr.readyState !== 4) {
-                    return;
-                }
-                if (xhr.status === 200) {
+            // and exclude the 304 error
+            axios.get(`${ASSET_PREFIX}product.json?id=${Math.floor((Math.random() * 100) + 1)}`)
+                .then(resp => {
+                    const newBranding = resp.data;
+                    // 'assign' in jQuery  is not a deep one. Fixing it.
+                    Object.keys(newBranding).forEach((key: string) => {
+                        const newVal = newBranding[key];
+                        const oldVal = (BRANDING_DEFAULT as any)[key];
+                        if (typeof newVal === 'object' && typeof oldVal === 'object') {
+                            newBranding[key] = Object.assign(newVal, oldVal);
+                        }
+                    });
+                    this.branding = $.extend(BRANDING_DEFAULT, newBranding);
+                    resolve();
+                }).catch(error => {
+                if (error.status === 304) {
                     resolve();
                 } else {
-                    const error = xhr.responseText ? xhr.responseText : 'Unknown error';
                     console.error(`Can't GET "${ASSET_PREFIX}product.json". Error: `, error);
                     reject(error);
                 }
-            };
+            });
         });
     }
 

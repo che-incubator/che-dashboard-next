@@ -57,8 +57,8 @@ export type IBrandingConfiguration = {
 }
 
 export const BRANDING_DEFAULT: IBranding = {
-  title: 'Eclipse Che',
-  name: 'Eclipse Che',
+  title: 'new Eclipse Che',
+  name: 'new Eclipse Che',
   logoFile: 'che-logo.svg',
   logoTextFile: 'che-logo-text.svg',
   favicon: 'favicon.ico',

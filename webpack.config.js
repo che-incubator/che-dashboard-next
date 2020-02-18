@@ -20,8 +20,9 @@ module.exports = {
             },
             {
                 enforce: 'pre',
-                test: /\.js$/,
-                loader: 'source-map-loader'
+                test: /\.(tsx|ts|jsx|js)$/,
+                loader: 'source-map-loader',
+                exclude: path.resolve(__dirname, 'node_modules'),
             },
             {
                 test: /\.css$/,
@@ -30,7 +31,16 @@ module.exports = {
             {
                 test: /\.styl$/,
                 loader: 'style-loader!css-loader!stylus-loader',
-            }
+            },
+            {
+                test: /\.(jpg|svg|woff|woff2|ttf|eot|ico)$/,
+                loader: 'file-loader',
+                options: {
+                    name: '[name].[ext]',
+                    outputPath: 'fonts/'
+                }
+            },
+
         ]
     },
     plugins: [
@@ -49,10 +59,12 @@ module.exports = {
         extensions: ['.js', '.ts', '.tsx']
     },
     devServer: {
-        port: 3000,
-        host: '0.0.0.0',
+        port: 3030,
+        host: 'localhost',
         inline: true,
         hot: true,
+        stats: 'errors-only',
+        open: true,
         proxy: {
             '/api': {
                 target: 'https://che.openshift.io/',

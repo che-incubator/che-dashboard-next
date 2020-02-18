@@ -9,7 +9,7 @@ declare namespace che {
         projects?: any;
         links?: {
             ide?: string
-            [rel: string]: string;
+            [rel: string]: string | undefined;
         };
         temporary?: boolean;
         status?: string;
@@ -33,12 +33,16 @@ declare namespace che {
         updated?: number;
         stackId?: string;
         stackName?: string;
-        factoryId?: string;
-        factoryurl?: string;
         errorMessage?: string;
         infrastructureNamespace: string;
 
-        [propName: string]: string | number;
+        [propName: string]: string | number | undefined;
+    }
+
+    export interface IWorkspaceConfigAttributes {
+        persistVolumes?: 'false';
+        editor?: string;
+        plugins?: string;
     }
 
     export interface IWorkspaceDevfile {
@@ -95,10 +99,10 @@ declare namespace che {
         firstName?: string;
         lastName?: string;
 
-        [propName: string]: string | number;
+        [propName: string]: string | number | undefined;
     }
 
-    export interface IProfile extends ng.resource.IResource<any> {
+    export interface IProfile {
         attributes?: IProfileAttributes;
         email: string;
         links?: Array<any>;
@@ -106,14 +110,14 @@ declare namespace che {
     }
 
     export interface IUser {
-        attributes: {
+        attributes?: {
             firstName?: string;
             lastName?: string;
-            [propName: string]: string | number;
+            [propName: string]: string | number | undefined;
         };
         id: string;
         name: string;
         email: string;
-        aliases: Array<string>;
+        aliases?: string[];
     }
 }
