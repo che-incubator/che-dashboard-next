@@ -4,7 +4,7 @@ import userReducer from './User';
 
 // the top-level state object
 export interface AppState {
-    workspaces: Workspaces.WorkspacesState | undefined;
+    workspaces: Workspaces.WorkspacesState;
     branding: any;
     user: any;
 }

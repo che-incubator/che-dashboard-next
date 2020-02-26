@@ -59,7 +59,6 @@ module.exports = {
         extensions: ['.js', '.ts', '.tsx']
     },
     devServer: {
-        port: 3030,
         host: 'localhost',
         inline: true,
         hot: true,

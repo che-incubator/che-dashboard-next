@@ -1,14 +1,16 @@
+import accessibleStyles from '@patternfly/react-styles/css/utilities/Accessibility/accessibility';
 import '@patternfly/react-core/dist/styles/base.css';
 import * as React from 'react';
 import {Link} from 'react-router-dom';
-import * as UserStore from '../store/User';
 import * as Gravatar from 'react-gravatar';
+import {css} from '@patternfly/react-styles';
 import {
     Brand,
     Dropdown,
     DropdownItem,
     DropdownToggle,
-    Nav, NavGroup,
+    Nav,
+    NavGroup,
     NavItem,
     NavList,
     Page,
@@ -18,122 +20,91 @@ import {
     ToolbarGroup,
     ToolbarItem
 } from '@patternfly/react-core';
-import accessibleStyles from '@patternfly/react-styles/css/utilities/Accessibility/accessibility';
-import {css} from '@patternfly/react-styles';
-
 import './nav-menu.styl';
 
-// At runtime, Redux will merge together...
-type NavMenuProps =
-    UserStore.UserState // ... state we've requested from the Redux store
-    & typeof UserStore.actionCreators // ... plus action creators we've requested
-    & {items: { to: string, label?: string }[]} & {children?: React.ReactNode};
-// {isDropdownOpen: boolean, activeItem: string}
-export class NavMenu extends React.PureComponent<any, any> {
-    private onDropdownToggle: (isOpen: boolean) => void;
-    private onDropdownSelect: (event: any) => void;
-    private onNavSelect: (item: any) => void;
+const THEME = 'dark';
 
+type INavItem = { to: string, label?: string, ico?: string };
+
+export class NavMenu extends React.PureComponent<any, any> {
+    private readonly onDropdownToggle: (isOpen: boolean) => void;
+    private readonly onDropdownSelect: (event: any) => void;
+    private readonly onNavSelect: (item: any) => void;
 
     constructor(props: any) {
         super(props);
-        this.state = {
-            isDropdownOpen: false,
-            activeItem: ''
-        };
+
+        this.state = {isDropdownOpen: false, activeItem: ''};
         this.onDropdownToggle = (isDropdownOpen: any) => {
-            this.setState({
-                isDropdownOpen
-            });
+            this.setState({isDropdownOpen})
         };
         this.onDropdownSelect = () => {
-            this.setState({
-                isDropdownOpen: !this.state.isDropdownOpen
-            });
+            this.setState({isDropdownOpen: !this.state.isDropdownOpen})
         };
         this.onNavSelect = (result: any) => {
-            this.setState({
-                activeItem: result.itemId
-            });
+            this.setState({activeItem: result.itemId})
         };
     }
 
     render() {
-
         const {isDropdownOpen, activeItem} = this.state;
 
+        // create a Sidebar
         const PageNav = (
-            <Nav onSelect={this.onNavSelect} aria-label='Nav' theme='dark'>
+            <Nav onSelect={this.onNavSelect} aria-label='Nav' theme={THEME}>
                 <NavList>
-                        {this.props.items.map((item: { to: string, label?: string }, index: number) => {
-                                if (!item.label) {
-                                    return;
-                                }
-                                return (
-                                    <NavItem key={`main_nav_bar_item_${index + 1}`}
-                                             itemId={item.to}
-                                             isActive={activeItem === item.to}>
-                                        <Link to={item.to}>{item.label}</Link>
-                                    </NavItem>
-                                );
-                            }
-                        )}
+                    {this.props.items.filter((item: INavItem) => !!item.label).map((item: INavItem, index: number) => (
+                        <NavItem key={`main_nav_bar_item_${index + 1}`}
+                                 itemId={item.to}
+                                 isActive={activeItem === item.to}>
+                            <Link to={item.to}><i className={item.ico}>&nbsp;&nbsp;</i>{item.label}</Link>
+                        </NavItem>
+                    ))}
                     <NavGroup title='RECENT WORKSPACES'>
-                        {this.props.workspaces.workspaces.map((workspace: any) =>
-                            <NavItem>
-                                <i className='fa fa-circle-o'>
-                                <Link to={`/workspace/${workspace.namespace}/${workspace.devfile.metadata.name}`}>
+                        <NavItem>
+                            <Link to={this.props.creationLink}>
+                                <i className='fa fa-plus'>&nbsp;&nbsp;</i>
+                                Create Workspace
+                            </Link>
+                        </NavItem>
+                        {this.props.workspaces.map((workspace: any, index: number) =>
+                            <NavItem key={`nav_bar_sub_item_${index + 1}`}>
+                                <Link to={`/ide/${workspace.namespace}/${workspace.devfile.metadata.name}`}>
+                                    <i className='fa fa-circle-o'>&nbsp;&nbsp;</i>
                                     {workspace.namespace}/{workspace.devfile.metadata.name}
                                 </Link>
-                                </i>
                             </NavItem>
                         )}
                     </NavGroup>
                 </NavList>
             </Nav>
         );
+        const Sidebar = <PageSidebar nav={PageNav} theme={THEME}/>;
 
-        const userDropdownItems = [
+        // create a Header
+        const UserDropdownItems = [
             <DropdownItem key='account_details'>Account details</DropdownItem>,
             <DropdownItem key='account_logout' component='button'>Logout</DropdownItem>
         ];
+        const UserDropdownToggle = (<DropdownToggle onToggle={this.onDropdownToggle}>
+            {this.props.user ? this.props.user.name : ''}
+        </DropdownToggle>);
         const PageToolbar = (
             <Toolbar>
                 <ToolbarGroup>
-                    <ToolbarItem
-                        className={css(
-                            accessibleStyles.screenReader,
-                            accessibleStyles.visibleOnMd
-                        )}
-                    >
-                        <Dropdown
-                            isPlain
-                            position='right'
-                            onSelect={this.onDropdownSelect}
-                            isOpen={isDropdownOpen}
-                            toggle={
-                                <DropdownToggle onToggle={this.onDropdownToggle}>
-                                    {this.props.user ? this.props.user.name : ''}
-                                </DropdownToggle>
-                            }
-                            dropdownItems={userDropdownItems}
-                        />
+                    <ToolbarItem className={css(accessibleStyles.screenReader, accessibleStyles.visibleOnMd)}>
+                        <Dropdown toggle={UserDropdownToggle} isOpen={isDropdownOpen} isPlain position='right'
+                                  dropdownItems={UserDropdownItems} onSelect={this.onDropdownSelect}/>
                     </ToolbarItem>
                 </ToolbarGroup>
             </Toolbar>
         );
-
-        const Header = (
-            <PageHeader
-                logo={<Brand src={'.//dashboard/assets/branding/che-logo.svg'} alt='Eclipse CHE'/>}
-                toolbar={PageToolbar}
-                avatar={<Gravatar email={(this.props.user ? this.props.user.email : '')} className='pf-c-avatar' alt='Avatar image'/>}
-                showNavToggle
-            />
-        );
-        const Sidebar = <PageSidebar nav={PageNav} theme='dark'/>;
+        const Avatar = <Gravatar email={(this.props.user ? this.props.user.email : '')} className='pf-c-avatar'/>;
+        const Logo = <Brand src={`./${this.props.logoURL}`} alt=''/>;
+        const Header = <PageHeader showNavToggle logo={Logo} avatar={Avatar} toolbar={PageToolbar}/>;
 
         return (
+            // create a Page
             <Page header={Header} sidebar={Sidebar} isManagedSidebar>
                 {this.props.children}
             </Page>

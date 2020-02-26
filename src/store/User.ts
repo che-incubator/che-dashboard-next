@@ -4,7 +4,9 @@ export interface UserState {
     isLogged: boolean;
 }
 
-export const actionCreators = {};
+export const actionCreators = {
+
+};
 
 
 export const setUser = (user: che.IUser | {}) => {

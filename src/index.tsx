@@ -7,7 +7,7 @@ import {createHashHistory} from 'history';
 import {PreloadData} from './services/bootstrap/PreloadData';
 
 const history = createHashHistory();
-// get the application-wide store instance, with state from the server where available.
+// get the application-wide store instance, with state from the server where available
 const store = configureStore(history);
 // preload app data
 new PreloadData(store).init();
