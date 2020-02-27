@@ -45,19 +45,11 @@ export class CheBranding {
      */
     private updateData(): Promise<void> {
         return new Promise<void>((resolve: IResolveFn<void>, reject: IRejectFn<void>) => {
-            // and exclude the 304 error
+            // TODO improve after the testing period '?id='
+            // and exclude the 304 error (need for testing)
             axios.get(`${ASSET_PREFIX}product.json?id=${Math.floor((Math.random() * 100) + 1)}`)
                 .then(resp => {
-                    const newBranding = resp.data;
-                    // 'assign' in jQuery  is not a deep one. Fixing it.
-                    Object.keys(newBranding).forEach((key: string) => {
-                        const newVal = newBranding[key];
-                        const oldVal = (BRANDING_DEFAULT as any)[key];
-                        if (typeof newVal === 'object' && typeof oldVal === 'object') {
-                            newBranding[key] = Object.assign(newVal, oldVal);
-                        }
-                    });
-                    this.branding = $.extend(BRANDING_DEFAULT, newBranding);
+                    this.branding = $.extend(true, BRANDING_DEFAULT, resp.data);
                     resolve();
                 }).catch(error => {
                 if (error.status === 304) {

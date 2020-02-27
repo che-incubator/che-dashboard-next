@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import axios from 'axios';
 import {injectable} from 'inversify';
+import {getDefer, IDeferred} from '../deferred';
 
 type IResolveFn<T> = {
     (value?: T | PromiseLike<T>): void
@@ -25,31 +26,32 @@ declare const Keycloak: Function;
  */
 @injectable()
 export class KeycloakSetup {
-    private isLoaded: Promise<void>;
+    static keycloakAuth = {
+        isPresent: false,
+        keycloak: null,
+        config: null
+    };
+    private static isDocumentReady: Promise<void> = new Promise<void>((resolve: IResolveFn<void>) => {
+        const state: IDocumentReadyState = document.readyState;
+        if (state === 'interactive' || state === 'complete') {
+            resolve();
+        } else {
+            document.onreadystatechange = () => resolve();
+        }
+    });
+
     private user: che.IUser | {} = {};
 
-    constructor() {
-        this.isLoaded = new Promise<void>((resolve: IResolveFn<void>) => {
-            const state: IDocumentReadyState = document.readyState;
-            if (state === 'interactive' || state === 'complete') {
-                resolve();
-            } else {
-                document.onreadystatechange = () => resolve();
-            }
-        });
-    }
 
     resolve(): Promise<void> {
+        if (KeycloakSetup.keycloakAuth.isPresent) {
+            return Promise.resolve();
+        }
         return new Promise<void>((resolve: IResolveFn<void>, reject: IRejectFn<void>) => {
             axios.get('/api/keycloak/settings')
                 .then(resp => {
-                    const keycloakAuth: { [prop: string]: any } = {
-                        isPresent: false,
-                        keycloak: null,
-                        config: null
-                    };
                     const keycloakSettings = resp.data;
-                    keycloakAuth.config = this.buildKeycloakConfig(keycloakSettings);
+                    KeycloakSetup.keycloakAuth.config = this.buildKeycloakConfig(keycloakSettings);
                     return new Promise((resolve: IResolveFn<any>, reject: IRejectFn<any>) => {
                         const src = keycloakSettings['che.keycloak.js_adapter_url'];
                         const callbacks: ICallbacks = {};
@@ -62,7 +64,7 @@ export class KeycloakSetup {
                                 useNonce: theUseNonce,
                                 redirectUrl: keycloakSettings['che.keycloak.redirect_url.dashboard']
                             };
-                            this.keycloakInit(keycloakAuth.config, initOptions).then(keycloak => {
+                            this.keycloakInit( KeycloakSetup.keycloakAuth.config, initOptions).then(keycloak => {
                                 resolve(keycloak);
                             }).catch(error => {
                                 reject(error);
@@ -71,8 +73,8 @@ export class KeycloakSetup {
                         callbacks.onError = reject;
                         this.addScript(src, callbacks);
                     }).then((keycloak: any) => {
-                        keycloakAuth.isPresent = true;
-                        keycloakAuth.keycloak = keycloak;
+                        KeycloakSetup.keycloakAuth.isPresent = true;
+                        KeycloakSetup.keycloakAuth.keycloak = keycloak;
                         (window as any)['_keycloak'] = keycloak;
                     });
                 }).catch(error => {
@@ -91,6 +93,60 @@ export class KeycloakSetup {
 
     getUser(): che.IUser | {} {
         return this.user;
+    }
+
+    fetchUserInfo(): Promise<any> {
+        const defer: IDeferred<any> = getDefer();
+
+        if (!KeycloakSetup.keycloakAuth.keycloak) {
+            defer.reject('Keycloak is not found on the page.');
+            return defer.promise;
+        }
+
+        (KeycloakSetup.keycloakAuth.keycloak as any).loadUserInfo().success((userInfo: any) => {
+            defer.resolve(userInfo);
+        }).error((error: any) => {
+            defer.reject(`User info fetching failed, error: ${error}`);
+        });
+
+        return defer.promise;
+    }
+
+    updateToken(validityTime: number): Promise<boolean> {
+        const deferred: IDeferred<boolean> = getDefer();
+
+        if(!KeycloakSetup.keycloakAuth.keycloak) {
+            deferred.reject();
+            return deferred.promise;
+        }
+        (KeycloakSetup.keycloakAuth.keycloak as any).updateToken(validityTime).success((refreshed: boolean) => {
+            deferred.resolve(refreshed);
+        }).error((error: any) => {
+            deferred.reject(error);
+        });
+
+        return deferred.promise;
+    }
+
+    isPresent(): boolean {
+        return KeycloakSetup.keycloakAuth.isPresent
+    }
+
+    getProfileUrl(): string {
+        const keycloak: any = KeycloakSetup.keycloakAuth.keycloak;
+        if(!keycloak || !keycloak.createAccountUrl) {
+            return '';
+        }
+        return keycloak.createAccountUrl();
+    }
+
+    logout(): void {
+        window.sessionStorage.removeItem('githubToken');
+        window.sessionStorage.setItem('oidcDashboardRedirectUrl', location.href);
+        const keycloak: any = KeycloakSetup.keycloakAuth.keycloak;
+        if(keycloak && keycloak.logout) {
+            keycloak.logout({});
+        }
     }
 
     private buildKeycloakConfig(keycloakSettings: any): any {
@@ -171,7 +227,7 @@ export class KeycloakSetup {
     }
 
     private addScript(src: string, callbacks: ICallbacks) {
-        this.isLoaded.then(() => {
+        KeycloakSetup.isDocumentReady.then(() => {
             const script = document.createElement('script');
             script.type = 'text/javascript';
             script.async = true;

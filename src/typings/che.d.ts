@@ -110,6 +110,7 @@ declare namespace che {
     }
 
     export interface IUser {
+        links: any[]
         attributes?: {
             firstName?: string;
             lastName?: string;

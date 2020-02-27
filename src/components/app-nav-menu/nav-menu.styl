@@ -1,0 +1,53 @@
+﻿a.navbar-brand
+  white-space normal
+  text-align center
+  word-break break-all
+
+html
+  font-size: 14px
+
+@media (min-width: 768px)
+  html
+    font-size 16px
+
+.box-shadow
+  box-shadow 0 .25rem .75rem rgba(0, 0, 0, .05)
+
+
+.ui-container .pf-c-page
+  height 100vh !important
+
+#page-sidebar
+  .fa-circle
+    color #00c183
+
+  .pf-c-nav__section
+    .pf-c-nav__list
+      a
+        padding-bottom 10px
+        line-height 14px
+
+      a:after
+        display none
+
+      a:hover
+        background-color var(--pf-c-nav--m-dark__item--m-current--BackgroundColor)
+#page-sidebar.pf-m-collapsed + .pf-c-page__main
+   .ide-page-frame
+     position absolute
+     top 0
+     animation-name fadeIn
+     animation-duration 1s
+     animation-timing-function ease-in-out
+
+@keyframes fadeIn
+  0%
+    top 60px
+  100%
+    top 0
+
+
+.pf-c-page
+  .pf-c-page__header
+    min-height 60px !important
+    z-index 0

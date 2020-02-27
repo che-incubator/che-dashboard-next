@@ -30,11 +30,12 @@ export class NavMenu extends React.PureComponent<any, any> {
     private readonly onDropdownToggle: (isOpen: boolean) => void;
     private readonly onDropdownSelect: (event: any) => void;
     private readonly onNavSelect: (item: any) => void;
+    private readonly onNavToggle: () => void;
 
     constructor(props: any) {
         super(props);
 
-        this.state = {isDropdownOpen: false, activeItem: ''};
+        this.state = {isDropdownOpen: false, activeItem: '', isNavOpen: true};
         this.onDropdownToggle = (isDropdownOpen: any) => {
             this.setState({isDropdownOpen})
         };
@@ -44,11 +45,27 @@ export class NavMenu extends React.PureComponent<any, any> {
         this.onNavSelect = (result: any) => {
             this.setState({activeItem: result.itemId})
         };
+        this.onNavToggle = () => {
+            this.setState({isNavOpen: !this.state.isNavOpen})
+        };
+
+        //TODO add implementation of adding and removing this event listener depends on rendering
+        window.addEventListener('message', event => {
+            if (!event || !window.location.hash.startsWith('#/ide/')) {
+                return;
+            }
+            if (event.data === 'show-navbar') {
+                this.setState({isNavOpen: true});
+
+            } else if (event.data === 'hide-navbar') {
+                this.setState({isNavOpen: false});
+            }
+        }, false);
+        // window.removeEventListener()
     }
 
     render() {
-        const {isDropdownOpen, activeItem} = this.state;
-
+        const {isDropdownOpen, activeItem, isNavOpen} = this.state;
         // create a Sidebar
         const PageNav = (
             <Nav onSelect={this.onNavSelect} aria-label='Nav' theme={THEME}>
@@ -70,7 +87,9 @@ export class NavMenu extends React.PureComponent<any, any> {
                         {this.props.workspaces.map((workspace: any, index: number) =>
                             <NavItem key={`nav_bar_sub_item_${index + 1}`}>
                                 <Link to={`/ide/${workspace.namespace}/${workspace.devfile.metadata.name}`}>
-                                    <i className='fa fa-circle-o'>&nbsp;&nbsp;</i>
+                                    <i className={workspace.status === 'RUNNING' ? 'fa fa-circle' : 'fa fa-circle-o'}>
+                                        &nbsp;
+                                    </i>
                                     {workspace.namespace}/{workspace.devfile.metadata.name}
                                 </Link>
                             </NavItem>
@@ -79,7 +98,7 @@ export class NavMenu extends React.PureComponent<any, any> {
                 </NavList>
             </Nav>
         );
-        const Sidebar = <PageSidebar nav={PageNav} theme={THEME}/>;
+        const Sidebar = <PageSidebar nav={PageNav} isNavOpen={isNavOpen} theme={THEME}/>;
 
         // create a Header
         const UserDropdownItems = [
@@ -101,11 +120,24 @@ export class NavMenu extends React.PureComponent<any, any> {
         );
         const Avatar = <Gravatar email={(this.props.user ? this.props.user.email : '')} className='pf-c-avatar'/>;
         const Logo = <Brand src={`./${this.props.logoURL}`} alt=''/>;
-        const Header = <PageHeader showNavToggle logo={Logo} avatar={Avatar} toolbar={PageToolbar}/>;
+
+        const logoProps = {
+            href: 'https://www.eclipse.org/che/',
+            target: '_blank'
+        };
+        const Header = (
+            <PageHeader
+                logo={Logo}
+                logoProps={logoProps}
+                toolbar={PageToolbar}
+                avatar={Avatar}
+                isNavOpen={isNavOpen}
+                onNavToggle={this.onNavToggle}
+            />
+        );
 
         return (
-            // create a Page
-            <Page header={Header} sidebar={Sidebar} isManagedSidebar>
+            <Page header={Header} sidebar={Sidebar}>
                 {this.props.children}
             </Page>
         );

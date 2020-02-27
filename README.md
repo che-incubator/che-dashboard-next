@@ -36,3 +36,10 @@ With initial implementation, this dashboard can show a simple list of created wo
 
 PS
 We can check our proxy. Just try in browser '${CHE_HOST}/api/nope' and you will receive a bypass page(bypass.html).
+
+An example of how to run with custom port and  server  
+
+```sh
+$ yarn start --env.server=https://che-che.192.168.99.100.nip.io  --port=3333
+```
+And it is better to have React and Redux Developer Tools for debugging

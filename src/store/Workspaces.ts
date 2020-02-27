@@ -24,8 +24,8 @@ type KnownAction = RequestWorkspacesAction | ReceiveWorkspacesAction;
 
 // ACTION CREATORS - These are functions exposed to UI components that will trigger a state transition.
 // They don't directly mutate state, but they can have external side-effects (such as loading data).
-
 export const actionCreators = {
+    // TODO finish with 'startDateIndex' implementation
     requestWorkspaces: (startDateIndex: number): AppThunkAction<KnownAction> => (dispatch, getState) => {
         // Only load data if it's something we don't already have (and are not already loading)
         const appState = getState();
@@ -55,7 +55,7 @@ export const reducer: Reducer<WorkspacesState> = (state: WorkspacesState | undef
                 isLoading: true
             };
         case 'RECEIVE_WORKSPACES':
-            // Only accept the incoming data if it matches the most recent request. This ensures we correctly
+            // Accept the incoming data if it matches the most recent request. For correct
             // handle out-of-order responses.
             if (action.startDateIndex === state.startDateIndex) {
                 return {

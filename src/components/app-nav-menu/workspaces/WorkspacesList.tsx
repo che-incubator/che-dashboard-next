@@ -1,8 +1,8 @@
 import * as React from 'react';
 import {connect} from 'react-redux';
 import { RouteComponentProps } from 'react-router';
-import { AppState } from '../store';
-import * as WorkspacesStore from '../store/Workspaces';
+import { AppState } from '../../../store';
+import * as WorkspacesStore from '../../../store/Workspaces';
 import {Gallery, NavItem, PageSection, Text, TextContent} from "@patternfly/react-core";
 import {Link} from "react-router-dom";
 
@@ -31,7 +31,8 @@ export class WorkspacesLis extends React.PureComponent<WorkspacesProps> {
     }
 
     private ensureDataFetched() {
-        this.props.requestWorkspaces(0);
+        // TODO It was the fastest way to organize Debouncing(rework it)
+        this.props.requestWorkspaces(Math.round(new Date().getTime()/5000));
     }
 
     private renderForecastsTable() {

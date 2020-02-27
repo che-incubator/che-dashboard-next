@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {useSelector} from 'react-redux';
-import {AppState} from '../store';
+import {AppState} from '../../store';
 import {NavMenu} from './NavMenu';
 
 export default (props: { items: { to: string; label?: string }[], children?: React.ReactNode }) => {
