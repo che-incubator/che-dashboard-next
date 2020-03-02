@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import axios from 'axios';
 import {injectable} from 'inversify';
+import * as $ from 'jquery';
 
 import {
     BRANDING_DEFAULT,
@@ -9,7 +10,6 @@ import {
     IBrandingFooter,
     IBrandingWorkspace
 } from './branding.constant'
-import * as $ from 'jquery';
 
 type IResolveFn<T> = {
     (value?: T | PromiseLike<T>): void
@@ -45,7 +45,7 @@ export class CheBranding {
      */
     private updateData(): Promise<void> {
         return new Promise<void>((resolve: IResolveFn<void>, reject: IRejectFn<void>) => {
-            // TODO improve after the testing period '?id='
+            // TODO remove '?id=' after the testing period
             // and exclude the 304 error (need for testing)
             axios.get(`${ASSET_PREFIX}product.json?id=${Math.floor((Math.random() * 100) + 1)}`)
                 .then(resp => {

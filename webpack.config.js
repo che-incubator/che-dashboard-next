@@ -68,6 +68,12 @@ module.exports = env => {
             host: 'localhost',
             stats: 'errors-only',
             proxy: {
+                '/api/websocket': {
+                    target: server,
+                    ws: true,
+                    changeOrigin: true,
+                    secure: false
+                },
                 '/api': {
                     target: server,
                     secure: false,
@@ -82,8 +88,13 @@ module.exports = env => {
                     target: server.replace('http', 'ws'),
                     ws: true,
                     secure: false,
-                    changeOrigin: true,
-                }
+                    changeOrigin: true
+                },
+                '/workspace-loader': {
+                    target: server,
+                    secure: false,
+                    changeOrigin: true
+                },
             },
         }
     }

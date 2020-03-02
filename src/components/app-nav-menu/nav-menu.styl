@@ -21,33 +21,62 @@ html
   .fa-circle
     color #00c183
 
+  .pf-c-nav .pf-c-nav__item
+    i
+      position relative
+      top 1px
+
+    .cheico-dashboard
+      top 2px
+
+    .fa-plus
+      top 1px
+
   .pf-c-nav__section
     .pf-c-nav__list
       a
-        padding-bottom 10px
-        line-height 14px
+        padding-bottom 8px
+        padding-top 8px
+        line-height 8px
 
       a:after
         display none
 
-      a:hover
-        background-color var(--pf-c-nav--m-dark__item--m-current--BackgroundColor)
-#page-sidebar.pf-m-collapsed + .pf-c-page__main
-   .ide-page-frame
-     position absolute
-     top 0
-     animation-name fadeIn
-     animation-duration 1s
-     animation-timing-function ease-in-out
+  .pf-m-dark
+    a:hover
+      background-color var(--pf-c-nav--m-dark__item--m-current--BackgroundColor)
 
-@keyframes fadeIn
+.pf-c-page .pf-c-page__header.nav-show
+  min-height 60px
+  max-height 60px
+  animation-name showHeader
+  animation-duration .2s
+  animation-timing-function ease-in
+
+@keyframes showHeader
   0%
-    top 60px
+    overflow hidden
+    min-height 0
+    max-height 0
   100%
-    top 0
+    overflow visible
+    min-height 60px
+    max-height 60px
 
+.pf-c-page .pf-c-page__header.nav-hide
+  overflow hidden
+  min-height 0
+  max-height 0
+  animation-name hideHeader
+  animation-duration .2s
+  animation-timing-function ease-in-out
 
-.pf-c-page
-  .pf-c-page__header
-    min-height 60px !important
-    z-index 0
+@keyframes hideHeader
+  0%
+    overflow visible
+    min-height 60px
+    max-height 60px
+  100%
+    overflow hidden
+    min-height 0
+    max-height 0

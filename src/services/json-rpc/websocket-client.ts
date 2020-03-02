@@ -1,108 +1,102 @@
-// import {communicationClientEvent, ICommunicationClient} from './json-rpc-client';
-//
-//
-// /**
-//  * JSON RPC through websocket.
-//  */
-// export class WebsocketClient implements ICommunicationClient {
-//   onResponse: Function;
-//   private $websocket: any = {};
-//   private websocketStream: any = {};
-//
-//   private handlers: {[event: string]: Function[]};
-//
-//   constructor () {
-//     // this.$websocket = $websocket;
-//
-//     this.handlers = {};
-//   }
-//
-//   /**
-//    * Performs connection to the pointed entrypoint
-//    */
-//   connect(entrypoint: string): Promise<any> {
-//     let deferred = this.$q.defer();
-//     this.websocketStream = this.$websocket(entrypoint);
-//
-//     this.websocketStream.onOpen(() => {
-//       const event: communicationClientEvent = 'open';
-//       if (this.handlers[event] && this.handlers[event].length > 0) {
-//         this.handlers[event].forEach((handler: Function) => handler() );
-//       }
-//
-//       deferred.resolve();
-//     });
-//     this.websocketStream.onError(() => {
-//       const event: communicationClientEvent = 'error';
-//       if (!this.handlers[event] || this.handlers[event].length === 0) {
-//         return;
-//       }
-//
-//       this.handlers[event].forEach((handler: Function) => handler() );
-//
-//       deferred.reject();
-//     });
-//     this.websocketStream.onMessage((message: any) => {
-//       const data = JSON.parse(message.data);
-//
-//       const event: communicationClientEvent = 'response';
-//       if (!this.handlers[event] || this.handlers[event].length === 0) {
-//         return;
-//       }
-//
-//       this.handlers[event].forEach((handler: Function) => handler(data) );
-//     });
-//     this.websocketStream.onClose(() => {
-//       const event: communicationClientEvent = 'close';
-//       if (!this.handlers[event] || this.handlers[event].length === 0) {
-//         return;
-//       }
-//
-//       this.handlers[event].forEach((handler: Function) => handler() );
-//     });
-//
-//     return deferred.promise;
-//   }
-//
-//   /**
-//    * Performs closing the connection
-//    */
-//   disconnect(): void {
-//     if (this.websocketStream) {
-//       this.websocketStream.close();
-//     }
-//   }
-//
-//   /**
-//    * Adds a listener on an event
-//    */
-//   addListener(event: communicationClientEvent, handler: Function): void {
-//     if (!this.handlers[event]) {
-//       this.handlers[event] = [];
-//     }
-//     this.handlers[event].push(handler);
-//   }
-//
-//   /**
-//    * Removes a listener
-//    */
-//   removeListener(event: communicationClientEvent, handler: Function): void {
-//     if (this.handlers[event] && handler) {
-//       const index = this.handlers[event].indexOf(handler);
-//       if (index !== -1) {
-//         this.handlers[event].splice(index, 1);
-//       }
-//     }
-//   }
-//
-//   /**
-//    * Sends pointed data
-//    */
-//   send(data: any): void {
-//     if (this.websocketStream) {
-//       this.websocketStream.send(data);
-//     } else {
-//       console.log(`Failed to send data. WebSocket stream isn't open.`);
-//     }
-//   }
-// }
+import {CommunicationClientEvent, ICommunicationClient} from './json-rpc-client';
+import ReconnectingWebSocket from 'reconnecting-websocket';
+import {getDefer} from '../deferred';
+
+
+/**
+ * JSON RPC through websocket.
+ */
+export class WebsocketClient implements ICommunicationClient {
+  private websocketStream: ReconnectingWebSocket;
+  private handlers: {[event: string]: Function[]} = {};
+
+
+  /**
+   * Performs connection to the pointed entrypoint.
+   * @param entrypointProvider the entrypoint to connect to
+   */
+  connect(entrypointProvider: (() => Promise<string>)): Promise<any> {
+    let deferred = getDefer();
+    this.websocketStream = new ReconnectingWebSocket(entrypointProvider, [], {
+      connectionTimeout: 60000
+    });
+    this.websocketStream.addEventListener('open', event => {
+      const eventType: CommunicationClientEvent = 'open';
+      this.callHandlers(eventType, event);
+      deferred.resolve();
+    });
+    this.websocketStream.addEventListener('error', event => {
+      const eventType: CommunicationClientEvent = 'error';
+      this.callHandlers(eventType, event);
+      deferred.reject();
+    });
+    this.websocketStream.addEventListener('message', message => {
+      const data = JSON.parse(message.data);
+      const eventType: CommunicationClientEvent = 'message';
+      this.callHandlers(eventType, data);
+    });
+    this.websocketStream.addEventListener('close', event => {
+      const eventType: CommunicationClientEvent = 'close';
+      this.callHandlers(eventType, event);
+    });
+    return deferred.promise;
+  }
+
+  /**
+   * Performs closing the connection.
+   * @param {number} code close code
+   */
+  disconnect(code?: number): void {
+    if (this.websocketStream) {
+      this.websocketStream.close(code ? code : undefined);
+    }
+  }
+
+  /**
+   * Adds a listener on an event.
+   * @param {CommunicationClientEvent} event
+   * @param {Function} handler
+   */
+  addListener(event: CommunicationClientEvent, handler: Function): void {
+    if (!this.handlers[event]) {
+      this.handlers[event] = [];
+    }
+    this.handlers[event].push(handler);
+  }
+
+  /**
+   * Removes a listener.
+   * @param {CommunicationClientEvent} event
+   * @param {Function} handler
+   */
+  removeListener(event: CommunicationClientEvent, handler: Function): void {
+    if (this.handlers[event] && handler) {
+      const index = this.handlers[event].indexOf(handler);
+      if (index !== -1) {
+        this.handlers[event].splice(index, 1);
+      }
+    }
+  }
+
+  private sleep(ms: number): Promise<any> {
+    return new Promise<any>(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Sends pointed data.
+   * @param data to be sent
+   */
+  async send(data: any): Promise<void> {
+    while (this.websocketStream.readyState !== this.websocketStream.OPEN) {
+      /* Wait for the reconnection establshed. */
+      await this.sleep(1000);
+    }
+    return this.websocketStream.send(JSON.stringify(data));
+  }
+
+  private callHandlers(event: CommunicationClientEvent, data?: any): void {
+    if (this.handlers[event] && this.handlers[event].length > 0) {
+      this.handlers[event].forEach((handler: Function) => handler(data));
+    }
+  }
+}

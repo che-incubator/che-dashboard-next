@@ -7,7 +7,7 @@ export type IRejectFn<T> = {
 }
 
 /**
- * Provides a defered object
+ * Provides a Defer object.
  */
 export type IDeferred<T> = {
     resolve(value?: T|Promise<T>): void;
@@ -15,11 +15,11 @@ export type IDeferred<T> = {
     promise: Promise<T>;
 }
 
-export const getDefer = () => {
-    const deferred: {[param: string]: Promise<any>|Function} = {};
-    deferred.promise = new Promise((resolve: IResolveFn<any>, reject: IRejectFn<any>) => {
-        deferred.resolve = resolve;
-        deferred.reject = reject;
+export const getDefer = <T>() => {
+    const defer: {[param: string]: any} = {};
+    defer.promise = new Promise((resolve: IResolveFn<T>, reject: IRejectFn<any>) => {
+        defer.resolve = resolve;
+        defer.reject = reject;
     });
-    return <IDeferred<any>>deferred;
+    return <IDeferred<T>>defer;
 };

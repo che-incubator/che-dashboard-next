@@ -119,6 +119,9 @@ declare namespace che {
         id: string;
         name: string;
         email: string;
-        aliases?: string[];
+        family_name?: string;
+        given_name?: string;
+        preferred_username?: string;
+        sub?: string;
     }
 }
