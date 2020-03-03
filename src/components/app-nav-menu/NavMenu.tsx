@@ -22,10 +22,11 @@ import {
 } from '@patternfly/react-core';
 import {container} from '../../inversify.config';
 import './nav-menu.styl';
-import {Keycloak} from "../../services/keycloak/Keycloak";
+import {Keycloak} from '../../services/keycloak/Keycloak';
+import {WorkspaceIndicator} from './WorkspaceIndicator';
 
 const DARK = 'dark';
-const WHITE = 'white';
+const LIGHT = 'light';
 
 type INavItem = { to: string, label?: string, ico?: string };
 
@@ -103,9 +104,7 @@ export class NavMenu extends React.PureComponent<any, any> {
                             <NavItem key={`nav_bar_sub_item_${index + 1}`} itemId={`wrksp_${index + 1}`}
                                      isActive={activeItem === `wrksp_${index + 1}`}>
                                 <Link to={`/ide/${workspace.namespace}/${workspace.devfile.metadata.name}`}>
-                                    <i className={workspace.status === 'RUNNING' ? 'fa fa-circle' : 'fa fa-circle-o'}>
-                                        &nbsp;&nbsp;
-                                    </i>
+                                    <WorkspaceIndicator status={workspace.status} />
                                     {workspace.namespace}/{workspace.devfile.metadata.name}
                                 </Link>
                             </NavItem>
@@ -116,7 +115,7 @@ export class NavMenu extends React.PureComponent<any, any> {
         );
         const Sidebar = <PageSidebar nav={PageNav} isNavOpen={isNavOpen} theme={theme}/>;
         const UserDropdownItems = [
-            <DropdownItem key='white' onClick={() => this.onTheme(WHITE)} component='button'>White theme</DropdownItem>,
+            <DropdownItem key='white' onClick={() => this.onTheme(LIGHT)} component='button'>Light theme</DropdownItem>,
             <DropdownItem key='dark' onClick={() => this.onTheme(DARK)} component='button'>Dadark theme</DropdownItem>,
             <DropdownItem key='account_details'>Account details</DropdownItem>,
             <DropdownItem key='account_logout' onClick={this.onLogout} component='button'>Logout</DropdownItem>

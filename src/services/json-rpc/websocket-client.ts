@@ -1,11 +1,13 @@
 import {CommunicationClientEvent, ICommunicationClient} from './json-rpc-client';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import {getDefer} from '../deferred';
+import {injectable} from 'inversify';
 
 
 /**
  * JSON RPC through websocket.
  */
+@injectable()
 export class WebsocketClient implements ICommunicationClient {
   private websocketStream: ReconnectingWebSocket;
   private handlers: {[event: string]: Function[]} = {};

@@ -24,7 +24,6 @@ export interface ICommunicationClient {
 
     /**
      * Performs connections.
-     *
      * @param entrypointProvider
      */
     connect(entrypointProvider: () => Promise<string>): Promise<void>;
@@ -37,7 +36,6 @@ export interface ICommunicationClient {
 
     /**
      * Send pointed data.
-     *
      * @param data data to be sent
      */
     send(data: any): void;

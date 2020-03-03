@@ -84,12 +84,6 @@ module.exports = env => {
                         }
                     },
                 },
-                '/ws': {
-                    target: server.replace('http', 'ws'),
-                    ws: true,
-                    secure: false,
-                    changeOrigin: true
-                },
                 '/workspace-loader': {
                     target: server,
                     secure: false,
