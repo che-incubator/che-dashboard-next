@@ -1,8 +1,8 @@
-import { CheJsonRpcApiClient } from './che-json-rpc-api-service';
-import { ICommunicationClient, CommunicationClientEvent } from './json-rpc-client';
+import { CheJsonRpcApiClient } from './JsonRpcApiService';
+import { ICommunicationClient, CommunicationClientEvent } from './JsonRpcClient';
 import {Keycloak} from '../keycloak/Keycloak';
 import {container} from '../../inversify.config';
-import {WebsocketClient} from "./websocket-client";
+import {WebsocketClient} from "./WebsocketClient";
 
 export enum MasterChannels {
   ENVIRONMENT_OUTPUT = 'runtime/log',
@@ -15,7 +15,7 @@ const UNSUBSCRIBE: string = 'unsubscribe';
 /**
  * Client API for workspace master interactions.
  */
-export class CheJsonRpcMasterApi {
+export class JsonRpcMasterApi {
   private readonly keycloak: Keycloak;
   private client: ICommunicationClient;
   private cheJsonRpcApi: CheJsonRpcApiClient;

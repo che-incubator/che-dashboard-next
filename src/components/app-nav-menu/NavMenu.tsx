@@ -97,7 +97,7 @@ export class NavMenu extends React.PureComponent<any, any> {
                         </NavItem>
                     ))}
                     <NavGroup title='RECENT WORKSPACES'>
-                        <NavItem><Link to={'/create-workspace'}><i className='fa fa-plus'>&nbsp;&nbsp;</i>
+                        <NavItem><Link to={creationLink}><i className='fa fa-plus'>&nbsp;&nbsp;</i>
                             Create Workspace
                         </Link></NavItem>
                         {this.props.workspaces.map((workspace: any, index: number) =>
@@ -113,13 +113,7 @@ export class NavMenu extends React.PureComponent<any, any> {
                 </NavList>
             </Nav>
         );
-        const Sidebar = <PageSidebar nav={PageNav} isNavOpen={isNavOpen} theme={theme}/>;
-        const UserDropdownItems = [
-            <DropdownItem key='white' onClick={() => this.onTheme(LIGHT)} component='button'>Light theme</DropdownItem>,
-            <DropdownItem key='dark' onClick={() => this.onTheme(DARK)} component='button'>Dadark theme</DropdownItem>,
-            <DropdownItem key='account_details'>Account details</DropdownItem>,
-            <DropdownItem key='account_logout' onClick={this.onLogout} component='button'>Logout</DropdownItem>
-        ];
+
         const getUserName = () => {
             const user = this.props.user;
             if (user.given_name && user.family_name) {
@@ -127,6 +121,14 @@ export class NavMenu extends React.PureComponent<any, any> {
             }
             return user.name;
         };
+
+        const UserDropdownItems = [
+            <DropdownItem key='white' onClick={() => this.onTheme(LIGHT)} component='button'>Light theme</DropdownItem>,
+            <DropdownItem key='dark' onClick={() => this.onTheme(DARK)} component='button'>Dadark theme</DropdownItem>,
+            <DropdownItem key='account_details'>Account details</DropdownItem>,
+            <DropdownItem key='account_logout' onClick={this.onLogout} component='button'>Logout</DropdownItem>
+        ];
+
         const UserDropdownToggle = (<DropdownToggle onToggle={this.onDropdownToggle}>{getUserName()}</DropdownToggle>);
         const PageToolbar = (
             <Toolbar>
@@ -151,6 +153,8 @@ export class NavMenu extends React.PureComponent<any, any> {
                 onNavToggle={this.onNavToggle}
             />
         );
+
+        const Sidebar = <PageSidebar nav={PageNav} isNavOpen={isNavOpen} theme={theme}/>;
 
         return (<Page header={Header} sidebar={Sidebar}> {this.props.children} </Page>);
     }

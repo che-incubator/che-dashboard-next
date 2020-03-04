@@ -1,10 +1,4 @@
-import {ICommunicationClient, JsonRpcClient} from './json-rpc-client';
-
-export class IChannel {
-    subscription: string;
-    unsubscription: string;
-    notification: string;
-}
+import {ICommunicationClient, JsonRpcClient} from './JsonRpcClient';
 
 /**
  * Class for basic CHE API communication methods.

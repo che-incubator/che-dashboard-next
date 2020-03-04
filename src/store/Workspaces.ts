@@ -2,7 +2,7 @@ import {Action, Reducer} from 'redux';
 import {AppThunkAction} from './';
 import fetchWorkspaces from '../services/api/workspaces';
 import {container} from '../inversify.config';
-import {CheJsonRpcApi} from '../services/json-rpc/che-json-rpc-api.factory';
+import {CheJsonRpcApi} from '../services/json-rpc/JsonRpcApiFactory';
 import {CheBranding} from '../services/bootstrap/CheBranding';
 
 // This state defines the type of data maintained in the Redux store.

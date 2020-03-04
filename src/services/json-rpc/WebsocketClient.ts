@@ -1,4 +1,4 @@
-import {CommunicationClientEvent, ICommunicationClient} from './json-rpc-client';
+import {CommunicationClientEvent, ICommunicationClient} from './JsonRpcClient';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import {getDefer} from '../deferred';
 import {injectable} from 'inversify';
@@ -90,7 +90,6 @@ export class WebsocketClient implements ICommunicationClient {
    */
   async send(data: any): Promise<void> {
     while (this.websocketStream.readyState !== this.websocketStream.OPEN) {
-      /* Wait for the reconnection establshed. */
       await this.sleep(1000);
     }
     return this.websocketStream.send(JSON.stringify(data));

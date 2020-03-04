@@ -3,8 +3,8 @@ import {Container} from 'inversify';
 import {CheBranding} from './services/bootstrap/CheBranding';
 import {KeycloakSetup} from './services/bootstrap/KeycloakSetup';
 import {Keycloak} from './services/keycloak/Keycloak';
-import {WebsocketClient} from './services/json-rpc/websocket-client';
-import {CheJsonRpcApi} from "./services/json-rpc/che-json-rpc-api.factory";
+import {WebsocketClient} from './services/json-rpc/WebsocketClient';
+import {CheJsonRpcApi} from "./services/json-rpc/JsonRpcApiFactory";
 
 const container = new Container();
 

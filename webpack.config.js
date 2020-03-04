@@ -71,13 +71,19 @@ module.exports = env => {
                 '/api/websocket': {
                     target: server,
                     ws: true,
+                    secure: false,
                     changeOrigin: true,
-                    secure: false
+                    headers: {
+                        origin: server
+                    }
                 },
                 '/api': {
                     target: server,
                     secure: false,
                     changeOrigin: true,
+                    headers: {
+                        origin: server
+                    },
                     bypass(req) {
                         if (req.url === '/api/nope') {
                             return '/bypass.html';
@@ -87,7 +93,10 @@ module.exports = env => {
                 '/workspace-loader': {
                     target: server,
                     secure: false,
-                    changeOrigin: true
+                    changeOrigin: true,
+                    headers: {
+                        origin: server
+                    }
                 },
             },
         }

@@ -48,23 +48,10 @@ type IRequest = {
     params: any,
 }
 
-type IResponse = {
-    jsonrpc: string,
-    id: string,
-    result?: any,
-    error?: IError,
-}
-
 type INotification = {
     jsonrpc: string,
     method: string,
     params: any,
-}
-
-type IError = {
-    number: number,
-    message: string,
-    data?: any,
 }
 
 /**
