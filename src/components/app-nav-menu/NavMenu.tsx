@@ -86,7 +86,7 @@ export class NavMenu extends React.PureComponent<any, any> {
     }
 
     render() {
-        const {isDropdownOpen, activeItem, isNavOpen, creationLink, theme} = this.state;
+        const {isDropdownOpen, activeItem, isNavOpen, theme} = this.state;
         // create a Sidebar
         const PageNav = (
             <Nav onSelect={this.onNavSelect} aria-label='Nav' theme={theme}>
@@ -97,7 +97,7 @@ export class NavMenu extends React.PureComponent<any, any> {
                         </NavItem>
                     ))}
                     <NavGroup title='RECENT WORKSPACES'>
-                        <NavItem><Link to={creationLink}><i className='fa fa-plus'>&nbsp;&nbsp;</i>
+                        <NavItem><Link to={'/create-workspace'}><i className='fa fa-plus'>&nbsp;&nbsp;</i>
                             Create Workspace
                         </Link></NavItem>
                         {this.props.workspaces.map((workspace: any, index: number) =>

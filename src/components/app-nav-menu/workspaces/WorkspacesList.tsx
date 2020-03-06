@@ -13,7 +13,7 @@ type WorkspacesProps =
     & RouteComponentProps<{ startDateIndex: string }>
     & { columns: string[], rows: any[] }; // ... plus incoming routing parameters
 
-export class WorkspacesLis extends React.PureComponent<WorkspacesProps> {
+export class WorkspacesList extends React.PureComponent<WorkspacesProps> {
 
     constructor(props: WorkspacesProps) {
         super(props);
@@ -75,4 +75,4 @@ export class WorkspacesLis extends React.PureComponent<WorkspacesProps> {
 export default connect(
     (state: AppState) => state.workspaces, // Selects which state properties are merged into the component's props
     WorkspacesStore.actionCreators // Selects which action creators are merged into the component's props
-)(WorkspacesLis as any);
+)(WorkspacesList as any);

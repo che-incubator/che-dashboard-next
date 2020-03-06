@@ -124,4 +124,13 @@ declare namespace che {
         preferred_username?: string;
         sub?: string;
     }
+
+    export interface IDevfileMetaData {
+        displayName: string;
+        description?: string;
+        globalMemoryLimit: string;
+        icon: string;
+        links: any;
+        tags: Array<string>;
+    }
 }
