@@ -25,10 +25,10 @@ export class PreloadData {
         this.keycloak = container.get(Keycloak);
     }
 
-    init(): void {
+    async init(): Promise<void> {
         this.setBranding();// default values for a loader
         this.updateBranding();
-        this.updateUser().then(() => {
+        await this.updateUser().then(() => {
             this.updateKeycloakUserInfo();
             this.updateWorkspaces();
             this.updateDevfilesRegistry();

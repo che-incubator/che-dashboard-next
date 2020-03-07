@@ -1,9 +1,10 @@
-import {Action, Reducer} from 'redux';
+import {Action, bindActionCreators, Reducer} from 'redux';
 import {AppThunkAction} from './';
 import fetchWorkspaces from '../services/api/workspaces';
 import {container} from '../inversify.config';
 import {CheJsonRpcApi} from '../services/json-rpc/JsonRpcApiFactory';
 import {CheBranding} from '../services/bootstrap/CheBranding';
+import {JsonRpcMasterApi} from "../services/json-rpc/JsonRpcMasterApi";
 
 // This state defines the type of data maintained in the Redux store.
 export interface WorkspacesState {
@@ -33,22 +34,28 @@ type KnownAction = RequestWorkspacesAction | ReceiveWorkspacesAction | UpdateWor
 enum WorkspaceStatus { RUNNING = 1, STOPPED, PAUSED, STARTING, STOPPING, ERROR}
 const cheJsonRpcApi = container.get(CheJsonRpcApi);
 const cheBranding = container.get(CheBranding);
-const jsonRpcApiLocation = new URL(window.location.href).origin.replace('http', 'ws') + cheBranding.getWebsocketContext();
-const jsonRpcMasterApi = cheJsonRpcApi.getJsonRpcMasterApi(jsonRpcApiLocation);
+let jsonRpcMasterApi: JsonRpcMasterApi;
+
+// TODO change this test implementation to the real one
+const jsonRpcApiLocation = new URL(window.location.href).origin.replace('http', 'ws') + cheBranding.all.websocketContext;
 
 // ACTION CREATORS - These are functions exposed to UI components that will trigger a state transition.
 // They don't directly mutate state, but they can have external side-effects (such as loading data).
 export const actionCreators = {
     // TODO finish with 'startDateIndex' implementation
     requestWorkspaces: (startDateIndex: number): AppThunkAction<KnownAction> => (dispatch, getState) => {
+        // Lazy initialization of jsonRpcMasterApi
+        if (!jsonRpcMasterApi) {
+            jsonRpcMasterApi = cheJsonRpcApi.getJsonRpcMasterApi(jsonRpcApiLocation);
+        }
         // Only load data if it's something we don't already have (and are not already loading)
         const appState = getState();
         if (appState && appState.workspaces && startDateIndex !== appState.workspaces.startDateIndex) {
             fetchWorkspaces()
                 .then(data => {
+                    jsonRpcMasterApi.unSubscribeAllWorkspaceStatus();
                     data.forEach(workspace => {
-                        //TODO add an implementation for unsubscribe this callback
-                        jsonRpcMasterApi.subscribeWorkspaceStatus(<string>workspace.id, (message: any) => {
+                        jsonRpcMasterApi.subscribeWorkspaceStatus(workspace.id as string, (message: any) => {
                             const status = message.error ? 'ERROR' : message.status;
                             if (WorkspaceStatus[status]) {
                                 workspace.status = status;

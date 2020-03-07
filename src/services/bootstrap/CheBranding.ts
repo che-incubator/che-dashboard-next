@@ -4,11 +4,7 @@ import {injectable} from 'inversify';
 import * as $ from 'jquery';
 
 import {
-    BRANDING_DEFAULT,
-    IBrandingConfiguration,
-    IBrandingDocs,
-    IBrandingFooter,
-    IBrandingWorkspace
+    BRANDING_DEFAULT
 } from './branding.constant'
 
 type IResolveFn<T> = {
@@ -63,135 +59,16 @@ export class CheBranding {
     }
 
     get all(): IBranding {
-        return {
-            title: this.getProductName(),
-            name: this.getName(),
-            logoURL: this.getProductLogo(),
-            logoText: this.getProductLogoText(),
-            favicon: this.getProductFavicon(),
-            loaderURL: this.getLoaderUrl(),
-            websocketContext: this.getWebsocketContext(),
-            helpPath: this.getProductHelpPath(),
-            helpTitle: this.getProductHelpTitle(),
-            footer: this.getFooter(),
-            supportEmail: this.getProductSupportEmail(),
-            oauthDocs: this.getOauthDocs(),
-            cli: this.getCLI(),
-            docs: this.getDocs(),
-            workspace: this.getWorkspace(),
-            configuration: this.getConfiguration(),
-        };
-    }
+        const branding: IBranding = Object.assign({}, this.branding);
+        const logoURL = ASSET_PREFIX + branding.logoFile;
+        branding.logoURL = logoURL;
+        const logoText = ASSET_PREFIX + branding.logoTextFile;
+        branding.logoText = logoText;
+        const favicont = ASSET_PREFIX + branding.favicon;
+        branding.favicon = favicont;
+        const loaderURL = ASSET_PREFIX + branding.loader;
+        branding.loaderURL = loaderURL;
 
-    /**
-     * Gets name.
-     */
-    getName(): string {
-        return this.branding.name;
-    }
-
-    /**
-     * Gets product name.
-     */
-    getProductName(): string {
-        return this.branding.title;
-    }
-
-    /**
-     * Gets product logo.
-     */
-    getProductLogo(): string {
-        return ASSET_PREFIX + this.branding.logoFile;
-    }
-
-    /**
-     * Gets product favicon.
-     */
-    getProductFavicon(): string {
-        return ASSET_PREFIX + this.branding.favicon;
-    }
-
-    /**
-     * Gets product loader.
-     */
-    getLoaderUrl(): string {
-        return ASSET_PREFIX + this.branding.loader;
-    }
-
-    /**
-     * Gets ide resources path.
-     */
-    getWebsocketContext(): string {
-        return this.branding.websocketContext;
-    }
-
-    /**
-     * Gets product help path.
-     */
-    getProductHelpPath(): string {
-        return this.branding.helpPath;
-    }
-
-    /**
-     * Gets product help title.
-     */
-    getProductHelpTitle(): string {
-        return this.branding.helpTitle;
-    }
-
-    /**
-     * Gets product logo text.
-     */
-    getProductLogoText(): string {
-        return ASSET_PREFIX + this.branding.logoTextFile;
-    }
-
-    /**
-     * Gets oauth docs.
-     */
-    getOauthDocs(): string {
-        return this.branding.oauthDocs;
-    }
-
-    /**
-     * Gets product support email.
-     */
-    getProductSupportEmail(): string {
-        return this.branding.supportEmail;
-    }
-
-    /**
-     * Returns footer additional elements (email button, content, button links).
-     */
-    getFooter(): IBrandingFooter {
-        return this.branding.footer;
-    }
-
-    /**
-     * Returns object with configName and name.
-     */
-    getCLI(): { configName: string; name: string } {
-        return this.branding.cli;
-    }
-
-    /**
-     * Returns object with docs URLs.
-     */
-    getDocs(): IBrandingDocs {
-        return this.branding.docs;
-    }
-
-    /**
-     * Returns object with workspace dedicated data.
-     */
-    getWorkspace(): IBrandingWorkspace {
-        return this.branding.workspace;
-    }
-
-    /**
-     * Returns object with UD configuration options.
-     */
-    getConfiguration(): IBrandingConfiguration {
-        return this.branding.configuration;
+        return branding;
     }
 }

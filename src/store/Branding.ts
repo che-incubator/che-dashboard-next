@@ -20,7 +20,8 @@ const brandingReducer = (state: {branding: IBranding} | undefined = {branding: {
 
     switch (action.type) {
         case 'SET_BRANDING':
-            return action.branding;
+            const branding = action.branding;
+            return { branding };
     }
 
     return state;

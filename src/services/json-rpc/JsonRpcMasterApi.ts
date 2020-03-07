@@ -134,6 +134,13 @@ export class JsonRpcMasterApi {
   }
 
   /**
+   * Un-subscribes all pointed callback from workspace's status.
+   */
+  unSubscribeAllWorkspaceStatus(): void {
+    this.unsubscribeAll(MasterChannels.WORKSPACE_STATUS);
+  }
+
+  /**
    * Fetch client's id and stores it.
    * @returns {Promise<void>}
    */
@@ -172,5 +179,14 @@ export class JsonRpcMasterApi {
     const method: string = channel.toString();
     const params = { method: method, scope: { workspaceId: workspaceId } };
     this.cheJsonRpcApi.unsubscribe(UNSUBSCRIBE, method, callback, params);
+  }
+
+  /**
+   * Performs unsubscribe all pointed channels by pointed the channel to unsubscribe.
+   * @param channel channel to un-subscribe
+   */
+  private unsubscribeAll(channel: MasterChannels): void {
+    const method: string = channel.toString();
+    this.cheJsonRpcApi.unsubscribeAll(UNSUBSCRIBE, method);
   }
 }

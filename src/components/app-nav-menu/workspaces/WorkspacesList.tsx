@@ -5,6 +5,7 @@ import {AppState} from '../../../store';
 import * as WorkspacesStore from '../../../store/Workspaces';
 import {PageSection, PageSectionVariants, Text, TextContent} from '@patternfly/react-core';
 import {Table, TableBody, TableHeader,} from '@patternfly/react-table';
+import {WorkspaceIndicator} from '../WorkspaceIndicator';
 
 // At runtime, Redux will merge together...
 type WorkspacesProps =
@@ -31,7 +32,7 @@ export class WorkspacesList extends React.PureComponent<WorkspacesProps> {
     }
 
     public render() {
-        const columns = ['NAME', 'RAM', 'PROJECTS', 'STACK', 'ACTIONS'];
+        const columns = [<b>NAME</b>, 'RAM', 'PROJECTS', 'STACK', 'ACTIONS'];
         const rows = this.props.workspaces.map((workspace: che.IWorkspace) => {
             return {
                 cells: [
@@ -43,6 +44,11 @@ export class WorkspacesList extends React.PureComponent<WorkspacesProps> {
                 ]
             }
         });
+
+        const onRowClick = (e: any, item: any) => {
+            // TODO rework this native js solution
+            window.location.href = `#/workspace/${this.props.workspaces[item.id].namespace}/${this.props.workspaces[item.id].devfile.metadata.name}`
+        };
 
         return (
             <React.Fragment>
@@ -56,9 +62,11 @@ export class WorkspacesList extends React.PureComponent<WorkspacesProps> {
                     </TextContent>
                 </PageSection>
                 <PageSection>
-                    <Table cells={columns} rows={rows} aria-label="Loading Table Demo">
+                    <Table cells={columns}
+                           rows={rows}
+                           aria-label="workspaces">
                         <TableHeader/>
-                        <TableBody/>
+                        <TableBody onRowClick={onRowClick} />
                     </Table>
                 </PageSection>
             </React.Fragment>

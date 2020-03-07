@@ -139,6 +139,17 @@ export class JsonRpcClient {
     }
 
     /**
+     * Removes all notification handler.
+     * @param method method's name
+     */
+    public removeAllNotificationHandler(method: string): void {
+        const handlers = this.notificationHandlers.get(method);
+        if (handlers) {
+            handlers.length = 0;
+        }
+    }
+
+    /**
      * Processes response - detects whether it is JSON RPC response or notification.
      * @param message
      */

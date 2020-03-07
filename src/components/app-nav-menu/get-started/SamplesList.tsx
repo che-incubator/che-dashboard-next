@@ -11,6 +11,8 @@ import {
     TextContent
 } from '@patternfly/react-core';
 
+import './samples-list.styl';
+
 
 // At runtime, Redux will merge together...
 type DevfilesRegistryProps =

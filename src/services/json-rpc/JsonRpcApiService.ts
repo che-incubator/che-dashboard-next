@@ -43,6 +43,16 @@ export class CheJsonRpcApiClient {
     }
 
     /**
+     * Unsubscribe all handlers from events from service.
+     * @param event event's name to unsubscribe
+     * @param notification notification name binded to the event
+     */
+    unsubscribeAll(event: string, notification: string): void {
+        this.jsonRpcClient.removeAllNotificationHandler(notification);
+        this.jsonRpcClient.notify(event);
+    }
+
+    /**
      * Connects to the pointed entrypoint.
      * @param entrypointProvider entrypoint to connect to
      * @returns {Promise<void>} promise
