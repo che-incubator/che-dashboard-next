@@ -1,0 +1,33 @@
+.workspaces-list-table-header
+  user-select none
+  text-transform uppercase
+  color #4a90e2
+  tr > *
+    padding 10px 20px
+    font-size 14px
+
+.workspaces-list-table-body
+  user-select none
+  tr
+    cursor pointer
+    & > *
+      padding 10px 20px
+      font-size 14px
+      color rgba(0, 0, 0, 0.87)
+    i
+      position relative
+      opacity .8
+      top 1px
+  tr:hover
+    background-color #f5f5f5
+
+.workspace-status
+  padding-top 0
+  padding-bottom 0
+  & > *
+    position relative
+    font-size 18px
+    color #979797
+    top 2px
+    &:hover
+      color #4a90e2

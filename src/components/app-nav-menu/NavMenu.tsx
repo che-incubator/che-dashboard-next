@@ -41,6 +41,7 @@ export class NavMenu extends React.PureComponent<any, any> {
     private readonly onNavToggle: () => void;
     private readonly onTheme: (item: string) => void;
     private readonly onLogout: () => void;
+    private readonly handleMessage: (event: any) => void;
 
     constructor(props: any) {
         super(props);
@@ -71,8 +72,7 @@ export class NavMenu extends React.PureComponent<any, any> {
             this.setState({isNavOpen: !this.state.isNavOpen});
         };
 
-        //TODO add implementation of adding and removing this event listener depends on rendering
-        window.addEventListener('message', event => {
+        this.handleMessage = event => {
             if (!event || !window.location.hash.startsWith('#/ide/')) {
                 return;
             }
@@ -81,8 +81,15 @@ export class NavMenu extends React.PureComponent<any, any> {
             } else if (event.data === 'hide-navbar') {
                 this.setState({isNavOpen: false});
             }
-        }, false);
-        // window.removeEventListener()
+        }
+    }
+
+    componentDidMount() {
+        window.addEventListener('message', this.handleMessage, false);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('message', this.handleMessage);
     }
 
     render() {
@@ -104,8 +111,10 @@ export class NavMenu extends React.PureComponent<any, any> {
                             <NavItem key={`nav_bar_sub_item_${index + 1}`} itemId={`wrksp_${index + 1}`}
                                      isActive={activeItem === `wrksp_${index + 1}`}>
                                 <Link to={`/ide/${workspace.namespace}/${workspace.devfile.metadata.name}`}>
-                                    <WorkspaceIndicator status={workspace.status} />
-                                    {workspace.namespace}/{workspace.devfile.metadata.name}
+                                    <span className="workspace-name">
+                                        <WorkspaceIndicator status={workspace.status} />
+                                        {`${workspace.namespace}/${workspace.devfile.metadata.name}`}
+                                    </span>
                                 </Link>
                             </NavItem>
                         )}

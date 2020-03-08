@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 
-export const WorkspaceIndicator = (props: { status: string }) => {
+export const WorkspaceIndicator = (props: { status: string | undefined }) => {
     // RUNNING, STOPPED, PAUSED, STARTING, STOPPING, ERROR
     if (props.status === 'STARTING' || props.status === 'STOPPING') {
         return (
@@ -18,9 +18,11 @@ export const WorkspaceIndicator = (props: { status: string }) => {
     }
     return (
         <React.Fragment>
-            <i className={props.status === 'RUNNING' ? 'fa fa-circle' : 'fa fa-circle-o'}>
+            <span className="workspace-status-indicator">
+              <i className={props.status === 'RUNNING' ? 'fa fa-circle' : 'fa fa-circle-o'}>
                 &nbsp;&nbsp;
-            </i>
+              </i>
+            </span>
         </React.Fragment>
     );
 };

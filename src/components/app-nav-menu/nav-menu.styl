@@ -18,8 +18,13 @@ html
   height 100vh !important
 
 #page-sidebar
-  .fa-circle
-    color #00c183
+
+  .pf-c-nav .pf-c-nav__item .pf-c-nav__link
+    padding-right 10px
+    .workspace-name
+      white-space nowrap
+      overflow hidden
+      text-overflow ellipsis
 
   .pf-c-nav .pf-c-nav__item
     i
@@ -81,12 +86,17 @@ html
     min-height 0
     max-height 0
 
+
+
+
 .workspace-status-indicator
   display inline-block
   line-height inherit
   width 22px
   & > *
     display inline
+  .fa-circle
+    color #00c183
   .workspace-status-spinner
     display inline-block
     line-height inherit

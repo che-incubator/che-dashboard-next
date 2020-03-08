@@ -4,7 +4,7 @@ import {injectable} from 'inversify';
 import * as $ from 'jquery';
 
 import {
-    BRANDING_DEFAULT
+    BRANDING_DEFAULT, IBrandingDocs
 } from './branding.constant'
 
 type IResolveFn<T> = {
@@ -70,5 +70,12 @@ export class CheBranding {
         branding.loaderURL = loaderURL;
 
         return branding;
+    }
+
+    /**
+     * Returns object with docs URLs.
+     */
+    getDocs(): IBrandingDocs {
+        return this.branding.docs;
     }
 }
