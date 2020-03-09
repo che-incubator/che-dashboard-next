@@ -34,7 +34,7 @@ export default (props: { history: any }) => {
             {items.map((item: Item, index: number) => (
                 <Route key={`app_route_${index + 1}`} path={item.to} exact component={item.component}/>
             ))}
-            <Redirect path="*" to="/" />
+            <Redirect path='*' to='/' />
         </Layout>
     </Router>);
 };

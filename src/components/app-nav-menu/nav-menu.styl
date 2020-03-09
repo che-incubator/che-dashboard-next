@@ -1,52 +1,34 @@
-﻿a.navbar-brand
-  white-space normal
-  text-align center
-  word-break break-all
-
-html
-  font-size: 14px
-
-@media (min-width: 768px)
-  html
-    font-size 16px
-
-.box-shadow
-  box-shadow 0 .25rem .75rem rgba(0, 0, 0, .05)
-
-
-.ui-container .pf-c-page
+﻿.ui-container .pf-c-page
   height 100vh !important
 
 #page-sidebar
-
+  a.navbar-brand
+    white-space normal
+    text-align center
+    word-break break-all
   .pf-c-nav .pf-c-nav__item .pf-c-nav__link
     padding-right 10px
     .workspace-name
       white-space nowrap
       overflow hidden
       text-overflow ellipsis
-
+      line-height 14px
   .pf-c-nav .pf-c-nav__item
     i
       position relative
       top 1px
-
     .cheico-dashboard
       top 2px
-
     .fa-plus
       top 1px
-
   .pf-c-nav__section
     .pf-c-nav__list
       a
         padding-bottom 8px
         padding-top 8px
         line-height 8px
-
       a:after
         display none
-
   .pf-m-dark
     a:hover
       background-color var(--pf-c-nav--m-dark__item--m-current--BackgroundColor)

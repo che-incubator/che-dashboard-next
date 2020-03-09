@@ -34,6 +34,7 @@ type INavItem = { to: string, label?: string, ico?: string };
  * This class prepares the main dashboard page with nav menu.
  * @author Oleksii Orel
  */
+// TODO specify the types correctly(remove <any, any>).
 export class NavMenu extends React.PureComponent<any, any> {
     private readonly onDropdownToggle: (isOpen: boolean) => void;
     private readonly onDropdownSelect: (event: any) => void;
@@ -73,9 +74,6 @@ export class NavMenu extends React.PureComponent<any, any> {
         };
 
         this.handleMessage = event => {
-            if (!event || !window.location.hash.startsWith('#/ide/')) {
-                return;
-            }
             if (event.data === 'show-navbar') {
                 this.setState({isNavOpen: true});
             } else if (event.data === 'hide-navbar') {
@@ -112,7 +110,7 @@ export class NavMenu extends React.PureComponent<any, any> {
                                      isActive={activeItem === `wrksp_${index + 1}`}>
                                 <Link to={`/ide/${workspace.namespace}/${workspace.devfile.metadata.name}`}>
                                     <span className="workspace-name">
-                                        <WorkspaceIndicator status={workspace.status} />
+                                        <WorkspaceIndicator status={workspace.status}/>
                                         {`${workspace.namespace}/${workspace.devfile.metadata.name}`}
                                     </span>
                                 </Link>

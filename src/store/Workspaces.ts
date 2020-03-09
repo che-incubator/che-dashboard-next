@@ -1,6 +1,6 @@
 import {Action, bindActionCreators, Reducer} from 'redux';
 import {AppThunkAction} from './';
-import fetchWorkspaces from '../services/api/workspaces';
+import {fetchWorkspaces, startWorkspace, stopWorkspace} from '../services/api/workspaces';
 import {container} from '../inversify.config';
 import {CheJsonRpcApi} from '../services/json-rpc/JsonRpcApiFactory';
 import {CheBranding} from '../services/bootstrap/CheBranding';
@@ -39,9 +39,14 @@ let jsonRpcMasterApi: JsonRpcMasterApi;
 // TODO change this test implementation to the real one
 const jsonRpcApiLocation = new URL(window.location.href).origin.replace('http', 'ws') + cheBranding.all.websocketContext;
 
+export type IActionCreators = {
+    requestWorkspaces: (startDateIndex: number) => any;
+    startWorkspace: (workspace: string, startDateIndex: number) => any;
+    stopWorkspace: (workspace: string, startDateIndex: number) => any;
+}
 // ACTION CREATORS - These are functions exposed to UI components that will trigger a state transition.
 // They don't directly mutate state, but they can have external side-effects (such as loading data).
-export const actionCreators = {
+export const actionCreators: IActionCreators = {
     // TODO finish with 'startDateIndex' implementation
     requestWorkspaces: (startDateIndex: number): AppThunkAction<KnownAction> => (dispatch, getState) => {
         // Lazy initialization of jsonRpcMasterApi
@@ -52,9 +57,9 @@ export const actionCreators = {
         const appState = getState();
         if (appState && appState.workspaces && startDateIndex !== appState.workspaces.startDateIndex) {
             fetchWorkspaces()
-                .then(data => {
+                .then(workspaces => {
                     jsonRpcMasterApi.unSubscribeAllWorkspaceStatus();
-                    data.forEach(workspace => {
+                    workspaces.forEach(workspace => {
                         jsonRpcMasterApi.subscribeWorkspaceStatus(workspace.id as string, (message: any) => {
                             const status = message.error ? 'ERROR' : message.status;
                             if (WorkspaceStatus[status]) {
@@ -63,7 +68,33 @@ export const actionCreators = {
                             }
                         });
                     });
-                    dispatch({type: 'RECEIVE_WORKSPACES', startDateIndex: startDateIndex, workspaces: data});
+                    dispatch({type: 'RECEIVE_WORKSPACES', startDateIndex, workspaces});
+                });
+            dispatch({type: 'REQUEST_WORKSPACES', startDateIndex});
+        }
+    },
+    startWorkspace: (workspaceId: string, startDateIndex: number): AppThunkAction<KnownAction> => (dispatch, getState) => {
+        // Only load data if it's something we don't already have (and are not already loading)
+        const appState = getState();
+        if (appState && appState.workspaces && startDateIndex !== appState.workspaces.startDateIndex) {
+            startWorkspace(workspaceId)
+                .then(workspace => {
+                    if (workspace) {
+                        dispatch({type: 'UPDATE_WORKSPACE', startDateIndex, workspace});
+                    }
+                });
+            dispatch({type: 'REQUEST_WORKSPACES', startDateIndex: startDateIndex});
+        }
+    },
+    stopWorkspace: (workspaceId: string, startDateIndex: number): AppThunkAction<KnownAction> => (dispatch, getState) => {
+        // Only load data if it's something we don't already have (and are not already loading)
+        const appState = getState();
+        if (appState && appState.workspaces && startDateIndex !== appState.workspaces.startDateIndex) {
+            stopWorkspace(workspaceId)
+                .then(workspace => {
+                    if (workspace) {
+                        dispatch({type: 'UPDATE_WORKSPACE', startDateIndex, workspace});
+                    }
                 });
             dispatch({type: 'REQUEST_WORKSPACES', startDateIndex: startDateIndex});
         }
