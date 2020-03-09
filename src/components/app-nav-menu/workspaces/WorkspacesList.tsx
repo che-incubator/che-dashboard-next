@@ -7,6 +7,7 @@ import {Button, PageSection, PageSectionVariants, Text} from '@patternfly/react-
 import {Table, TableBody, TableHeader} from '@patternfly/react-table';
 import {WorkspaceIndicator} from '../WorkspaceIndicator';
 import WorkspaceStatus from './actions/WorkspaceStatus';
+import DeleteWorkspace from './actions/DeleteWorkspace';
 import {CheBranding} from '../../../services/bootstrap/CheBranding';
 import {IBrandingDocs} from '../../../services/bootstrap/branding.constant';
 
@@ -19,6 +20,7 @@ type WorkspacesProps =
     & WorkspacesStore.IActionCreators; // ... plus action creators we've requested
 
 export class WorkspacesList extends React.PureComponent<WorkspacesProps> {
+    // TODO rework it for using a storage.
     private docs: IBrandingDocs = container.get(CheBranding).getDocs();
 
     // This method is called when the component is first added to the document
@@ -32,40 +34,35 @@ export class WorkspacesList extends React.PureComponent<WorkspacesProps> {
     }
 
     public render() {
-        let timerId: number;
-        const onRowClick = (e: any, item: any) => {
-            const namespace = this.props.workspaces[item.id].namespace;
-            const name = this.props.workspaces[item.id].devfile.metadata.name;
-            // TODO rework this native js solution
-            // window events queue? ...  how to prevent DOM transforming by the widget ...
-            timerId = setTimeout(() => {
-                window.location.href = `#/workspace/${namespace}/${name}`;
-            }, 500);
-        };
-        const onActionClick = () => {
-            if (timerId) {
-                clearTimeout(timerId);
-            }
+        const onRowClick = (workspace: che.IWorkspace) => {
+            // TODO rework this native js solution.
+            window.location.href = `#/workspace/${workspace.namespace}/${workspace.devfile.metadata.name}`;
         };
 
         const columns = ['NAME', 'RAM', 'PROJECTS', 'STACK', 'ACTIONS'];
-        // TODO move all widgets from the 'actions' in a separate file
         const rows = this.props.workspaces.map((workspace: che.IWorkspace) => {
             return {
                 cells: [
-                    (<React.Fragment>
-                        <WorkspaceIndicator key={workspace.id} status={workspace.status}/>
+                    (<span onClick={() => onRowClick(workspace)}>
+                        <WorkspaceIndicator key={`indicator_${workspace.id}`} status={workspace.status}/>
                         {workspace.namespace}/{workspace.devfile.metadata.name}
-                    </React.Fragment>),
-                    `-`,
-                    `${workspace.devfile.projects ? workspace.devfile.projects.length : '-'}`,
-                    `${workspace.attributes && workspace.attributes.stackName ? workspace.attributes.stackName : ''}`,
-                    (<React.Fragment>
-                        <WorkspaceStatus workspaceId={workspace.id as string} onClick={onActionClick}/>
-                    </React.Fragment>)
+                    </span>),
+                    <span onClick={() => onRowClick(workspace)}>
+                        -
+                    </span>,
+                    <span onClick={() => onRowClick(workspace)}>
+                        {workspace.devfile.projects ? workspace.devfile.projects.length : '-'}
+                    </span>,
+                    <span onClick={() => onRowClick(workspace)}>
+                        {workspace.attributes && workspace.attributes.stackName ? workspace.attributes.stackName : ''}
+                    </span>,
+                    (<span>
+                        <WorkspaceStatus key={`status_${workspace.id}`} workspaceId={`${workspace.id}`}/>
+                        <DeleteWorkspace key={`delete_${workspace.id}`} workspaceId={`${workspace.id}`}/>
+                    </span>)
                 ]
             }
-        });
+        }) || [];
 
         return (
             <React.Fragment>
@@ -83,12 +80,15 @@ export class WorkspacesList extends React.PureComponent<WorkspacesProps> {
                     </Button>
                 </PageSection>
                 <PageSection variant={PageSectionVariants.light}>
-                    <Table cells={columns}
-                           rows={rows}
-                           aria-label='Workspaces'>
-                        <TableHeader className='workspaces-list-table-header'/>
-                        <TableBody className='workspaces-list-table-body' onRowClick={onRowClick}/>
-                    </Table>
+                    {rows.length === 0 ? (<Text component='p' className='workspaces-list-empty-state'>
+                            There are no workspaces.
+                        </Text>) :
+                        (<Table cells={columns}
+                                rows={rows}
+                                aria-label='Workspaces'>
+                            <TableHeader className='workspaces-list-table-header'/>
+                            <TableBody className='workspaces-list-table-body'/>
+                        </Table>)}
                 </PageSection>
             </React.Fragment>
         );

@@ -1,6 +1,6 @@
-import {Action, bindActionCreators, Reducer} from 'redux';
+import {Action, Reducer} from 'redux';
 import {AppThunkAction} from './';
-import {fetchWorkspaces, startWorkspace, stopWorkspace} from '../services/api/workspaces';
+import {deleteWorkspace, fetchWorkspaces, startWorkspace, stopWorkspace} from '../services/api/workspaces';
 import {container} from '../inversify.config';
 import {CheJsonRpcApi} from '../services/json-rpc/JsonRpcApiFactory';
 import {CheBranding} from '../services/bootstrap/CheBranding';
@@ -23,15 +23,23 @@ interface ReceiveWorkspacesAction {
     startDateIndex: number;
     workspaces: che.IWorkspace[];
 }
+
 interface UpdateWorkspaceAction {
     type: 'UPDATE_WORKSPACE';
     startDateIndex: number;
     workspace: che.IWorkspace;
 }
 
-type KnownAction = RequestWorkspacesAction | ReceiveWorkspacesAction | UpdateWorkspaceAction;
+interface DeleteWorkspaceAction {
+    type: 'DELETE_WORKSPACE';
+    startDateIndex: number;
+    workspaceId: string;
+}
+
+type KnownAction = RequestWorkspacesAction | ReceiveWorkspacesAction | UpdateWorkspaceAction | DeleteWorkspaceAction;
 
 enum WorkspaceStatus { RUNNING = 1, STOPPED, PAUSED, STARTING, STOPPING, ERROR}
+
 const cheJsonRpcApi = container.get(CheJsonRpcApi);
 const cheBranding = container.get(CheBranding);
 let jsonRpcMasterApi: JsonRpcMasterApi;
@@ -43,6 +51,7 @@ export type IActionCreators = {
     requestWorkspaces: (startDateIndex: number) => any;
     startWorkspace: (workspace: string, startDateIndex: number) => any;
     stopWorkspace: (workspace: string, startDateIndex: number) => any;
+    deleteWorkspace: (workspace: string, startDateIndex: number) => any;
 }
 // ACTION CREATORS - These are functions exposed to UI components that will trigger a state transition.
 // They don't directly mutate state, but they can have external side-effects (such as loading data).
@@ -98,6 +107,17 @@ export const actionCreators: IActionCreators = {
                 });
             dispatch({type: 'REQUEST_WORKSPACES', startDateIndex: startDateIndex});
         }
+    },
+    deleteWorkspace: (workspaceId: string, startDateIndex: number): AppThunkAction<KnownAction> => (dispatch, getState) => {
+        // Only load data if it's something we don't already have (and are not already loading)
+        const appState = getState();
+        if (appState && appState.workspaces && startDateIndex !== appState.workspaces.startDateIndex) {
+            deleteWorkspace(workspaceId)
+                .then(() => {
+                    dispatch({type: 'DELETE_WORKSPACE', startDateIndex, workspaceId});
+                });
+            dispatch({type: 'REQUEST_WORKSPACES', startDateIndex: startDateIndex});
+        }
     }
 };
 
@@ -122,6 +142,12 @@ export const reducer: Reducer<WorkspacesState> = (state: WorkspacesState | undef
                 workspaces: <[]>state.workspaces.map((workspace: che.IWorkspace) => {
                     return workspace.id === action.workspace.id ? action.workspace : workspace;
                 }),
+                isLoading: false
+            };
+        case 'DELETE_WORKSPACE':
+            return {
+                startDateIndex: action.startDateIndex,
+                workspaces: <[]>state.workspaces.filter(workspace => workspace.id !== action.workspaceId),
                 isLoading: false
             };
         case 'RECEIVE_WORKSPACES':

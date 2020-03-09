@@ -18,3 +18,8 @@ export const stopWorkspace = (workspaceId: string): Promise<che.IWorkspace> => {
     });
 };
 
+export const deleteWorkspace = (workspaceId: string): Promise<che.IWorkspace> => {
+    return axios.delete(`/api/workspace/${workspaceId}`).then(resp => {
+        return Promise.resolve(resp.data);
+    });
+};
