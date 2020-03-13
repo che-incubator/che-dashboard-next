@@ -1,10 +1,16 @@
 import {Action, Reducer} from 'redux';
 import {AppThunkAction} from './';
-import {deleteWorkspace, fetchWorkspaces, startWorkspace, stopWorkspace} from '../services/api/workspaces';
+import {
+    createWorkspace,
+    deleteWorkspace,
+    fetchWorkspaces,
+    startWorkspace,
+    stopWorkspace
+} from '../services/api/workspaces';
 import {container} from '../inversify.config';
 import {CheJsonRpcApi} from '../services/json-rpc/JsonRpcApiFactory';
 import {CheBranding} from '../services/bootstrap/CheBranding';
-import {JsonRpcMasterApi} from "../services/json-rpc/JsonRpcMasterApi";
+import {JsonRpcMasterApi} from '../services/json-rpc/JsonRpcMasterApi';
 
 // This state defines the type of data maintained in the Redux store.
 export interface WorkspacesState {
@@ -36,7 +42,18 @@ interface DeleteWorkspaceAction {
     workspaceId: string;
 }
 
-type KnownAction = RequestWorkspacesAction | ReceiveWorkspacesAction | UpdateWorkspaceAction | DeleteWorkspaceAction;
+interface AddWorkspaceAction {
+    type: 'ADD_WORKSPACE';
+    startDateIndex: number;
+    workspace: che.IWorkspace;
+}
+
+type KnownAction =
+    RequestWorkspacesAction
+    | ReceiveWorkspacesAction
+    | UpdateWorkspaceAction
+    | DeleteWorkspaceAction
+    | AddWorkspaceAction;
 
 enum WorkspaceStatus { RUNNING = 1, STOPPED, PAUSED, STARTING, STOPPING, ERROR}
 
@@ -52,6 +69,7 @@ export type IActionCreators = {
     startWorkspace: (workspace: string, startDateIndex: number) => any;
     stopWorkspace: (workspace: string, startDateIndex: number) => any;
     deleteWorkspace: (workspace: string, startDateIndex: number) => any;
+    createWorkspace: (devfileUrl: string, attributes: { [param: string]: string }, startDateIndex: number) => any;
 }
 // ACTION CREATORS - These are functions exposed to UI components that will trigger a state transition.
 // They don't directly mutate state, but they can have external side-effects (such as loading data).
@@ -118,6 +136,37 @@ export const actionCreators: IActionCreators = {
                 });
             dispatch({type: 'REQUEST_WORKSPACES', startDateIndex: startDateIndex});
         }
+    },
+    createWorkspace: (devfileUrl: string, attr: { [param: string]: string }, startDateIndex: number): AppThunkAction<KnownAction> => (dispatch, getState) => {
+        // Lazy initialization of jsonRpcMasterApi
+        if (!jsonRpcMasterApi) {
+            jsonRpcMasterApi = cheJsonRpcApi.getJsonRpcMasterApi(jsonRpcApiLocation);
+        }
+        return new Promise<void>((resolve: any, reject: any) => {
+            // Only load data if it's something we don't already have (and are not already loading)
+            const appState = getState();
+            if (appState && appState.workspaces && startDateIndex !== appState.workspaces.startDateIndex) {
+                createWorkspace(devfileUrl, attr)
+                    .then((workspace: any) => {
+                        if (workspace) {
+                            dispatch({type: 'ADD_WORKSPACE', startDateIndex, workspace});
+                            jsonRpcMasterApi.subscribeWorkspaceStatus(workspace.id as string, (message: any) => {
+                                const status = message.error ? 'ERROR' : message.status;
+                                if (WorkspaceStatus[status]) {
+                                    workspace.status = status;
+                                    dispatch({type: 'UPDATE_WORKSPACE', startDateIndex, workspace});
+                                }
+                            });
+                            resolve(workspace);
+                        } else {
+                            reject();
+                        }
+                    }).catch(() => {
+                    reject()
+                });
+                dispatch({type: 'REQUEST_WORKSPACES', startDateIndex: startDateIndex});
+            }
+        });
     }
 };
 
@@ -139,15 +188,21 @@ export const reducer: Reducer<WorkspacesState> = (state: WorkspacesState | undef
         case 'UPDATE_WORKSPACE':
             return {
                 startDateIndex: action.startDateIndex,
-                workspaces: <[]>state.workspaces.map((workspace: che.IWorkspace) => {
+                workspaces: state.workspaces.map((workspace: che.IWorkspace) => {
                     return workspace.id === action.workspace.id ? action.workspace : workspace;
                 }),
+                isLoading: false
+            };
+        case 'ADD_WORKSPACE':
+            return {
+                startDateIndex: action.startDateIndex,
+                workspaces: state.workspaces.concat([action.workspace]),
                 isLoading: false
             };
         case 'DELETE_WORKSPACE':
             return {
                 startDateIndex: action.startDateIndex,
-                workspaces: <[]>state.workspaces.filter(workspace => workspace.id !== action.workspaceId),
+                workspaces: state.workspaces.filter(workspace => workspace.id !== action.workspaceId),
                 isLoading: false
             };
         case 'RECEIVE_WORKSPACES':

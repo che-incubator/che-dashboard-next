@@ -1,47 +1,38 @@
 import * as React from 'react';
-import {connect, useSelector} from 'react-redux';
-import {RouteComponentProps} from 'react-router';
+import {connect} from 'react-redux';
 import {AppState} from '../../../store';
 import * as DevfilesRegistryStore from '../../../store/DevfilesRegistry';
-import {
-    Gallery,
-    PageSection,
-    PageSectionVariants,
-    Text,
-    TextContent
-} from '@patternfly/react-core';
+import * as WorkspacesStore from '../../../store/Workspaces';
+import {Gallery, PageSection, PageSectionVariants, Text, TextContent} from '@patternfly/react-core';
 
 import './samples-list.styl';
 
 
 // At runtime, Redux will merge together...
 type DevfilesRegistryProps =
-    DevfilesRegistryStore.DevfilesState // ... state we've requested from the Redux store
-    & typeof DevfilesRegistryStore.actionCreators // ... plus action creators we've requested
-    & RouteComponentProps<{ startDateIndex: string }>
-    & { columns: string[], rows: any[] }; // ... plus incoming routing parameters
+    { devfilesRegistry: DevfilesRegistryStore.DevfilesState }// ... state we've requested from the Redux store
+    & WorkspacesStore.IActionCreators
+    & { history: any }; // ... plus action creators we've requested
 
 export class SamplesList extends React.PureComponent<DevfilesRegistryProps> {
 
-    constructor(props: any) {
-        super(props);
-
-    }
-
-    // This method is called when the component is first added to the document
-    public componentDidMount() {
-        this.ensureDataFetched();
-    }
-
-    // This method is called when the route parameters change
-    public componentDidUpdate() {
-       // this.ensureDataFetched();
-    }
-
     public render() {
-        const data = this.props.data && this.props.data[0] ?  this.props.data[0] : {};
+        const data = this.props.devfilesRegistry.data && this.props.devfilesRegistry.data[0] ? this.props.devfilesRegistry.data[0] : {};
         const registryUrl = (data as any).registryUrl || '';
         const devfiles: [] = (data as any).devfiles || [];
+
+        const createWorkspace = (devfile: che.IDevfileMetaData) => {
+            if (!devfile.links || !devfile.links.self) {
+                return;
+            }
+            const devfileUrl = registryUrl + devfile.links.self;
+            // TODO It was the fastest way to organize Debouncing. Rework it.
+            const timeLabel = Math.round(new Date().getTime() / 5000);
+            const promise = this.props.createWorkspace(devfileUrl, {stackName: devfile.displayName}, timeLabel);
+            promise.then((workspace: che.IWorkspace) => {
+                this.props.history.push(`/ide/${workspace.namespace}/${workspace.devfile.metadata.name}`);
+            })
+        };
 
         return (
             <React.Fragment>
@@ -56,15 +47,15 @@ export class SamplesList extends React.PureComponent<DevfilesRegistryProps> {
                 <PageSection>
                     <Gallery gutter='md'>
                         {devfiles.map((devfile: che.IDevfileMetaData, i) => (
-                            <div className="pf-c-card pf-m-hoverable pf-m-compact pf-m-selectable get-started-template"
-                                 tabIndex={-1} key={i}>
-                                <div className="pf-c-card__head">
+                            <div className='pf-c-card pf-m-hoverable pf-m-compact pf-m-selectable get-started-template'
+                                 tabIndex={-1} key={i} onClick={() => createWorkspace(devfile)}>
+                                <div className='pf-c-card__head'>
                                     <img src={registryUrl + devfile.icon}/>
                                 </div>
-                                <div className="pf-c-card__header pf-c-title pf-m-md">
+                                <div className='pf-c-card__header pf-c-title pf-m-md'>
                                     <b>{devfile.displayName}</b>
                                 </div>
-                                <div className="pf-c-card__body">
+                                <div className='pf-c-card__body'>
                                     {devfile.description}
                                 </div>
                             </div>
@@ -74,15 +65,13 @@ export class SamplesList extends React.PureComponent<DevfilesRegistryProps> {
             </React.Fragment>
         );
     }
-
-    private ensureDataFetched() {
-        // TODO It was the fastest way to organize Debouncing(rework it)
-        this.props.requestDevfiles(Math.round(new Date().getTime() / 5000));
-    }
 }
 
-
 export default connect(
-    (state: AppState) => state.devfilesRegistry, // Selects which state properties are merged into the component's props
-    DevfilesRegistryStore.actionCreators // Selects which action creators are merged into the component's props
+    (state: AppState) => {
+        const {devfilesRegistry, workspaces} = state;
+        return {devfilesRegistry, workspaces};
+    }, // Selects which state properties are merged into the component's props(devfilesRegistry and workspaces)
+    WorkspacesStore.actionCreators // Selects which action creators are merged into the component's props
+
 )(SamplesList as any);

@@ -32,7 +32,7 @@ export const actionCreators = {
         const appState = getState();
         if (appState && appState.devfilesRegistry && startDateIndex !== appState.devfilesRegistry.startDateIndex) {
             fetchDevfiles()
-                .then(res => {;
+                .then(res => {
                     dispatch({type: 'RECEIVE_DEVFILES', startDateIndex: startDateIndex, data: [res]});
                 });
             dispatch({type: 'REQUEST_DEVFILES', startDateIndex: startDateIndex});
@@ -40,7 +40,7 @@ export const actionCreators = {
     }
 };
 
-const unloadedState: DevfilesState = { data: [], isLoading: false, startDateIndex: 0};
+const unloadedState: DevfilesState = {data: [], isLoading: false, startDateIndex: 0};
 
 export const reducer: Reducer<DevfilesState> = (state: DevfilesState | undefined, incomingAction: Action): DevfilesState => {
     if (state === undefined) {
