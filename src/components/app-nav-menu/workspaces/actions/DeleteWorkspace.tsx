@@ -1,46 +1,53 @@
 import * as React from 'react';
-import {connect} from 'react-redux';
-import {AppState} from '../../../../store';
 import {Tooltip} from '@patternfly/react-core';
-import * as WorkspacesStore from '../../../../store/Workspaces';
 
 import './delete-workspace.styl';
 
+// TODO should move this constant to the separate file
 const STOPPED = 'STOPPED';
 
-type DeleteWorkspaceProps =
-    WorkspacesStore.WorkspacesState // ... state we've requested from the Redux store
-    & WorkspacesStore.IActionCreators // ... plus action creators we've requested
-    & { workspaceId: string; }; // ... plus incoming parameters
+type DeleteWorkspaceProps = { workspaceId: string, status: string, deleteWorkspace: Function }; // incoming parameters
 
 class DeleteWorkspace extends React.PureComponent<DeleteWorkspaceProps> {
+    // TODO move it to the separate service
+    private timerVar: number | undefined;
+    private isDebounceDelay = false;
+    private setDebounceDelay = (time: number = 5000) => {
+        this.isDebounceDelay = true;
+        if (this.timerVar) {
+            clearTimeout(this.timerVar);
+        }
+        this.timerVar = setTimeout(() => this.isDebounceDelay = false, time);
+    };
+
+    private isDisabled = () => {
+        return this.isDebounceDelay || this.props.status !== STOPPED;
+    };
 
     public render() {
-        const workspace = this.props.workspaces.find(workspace => workspace.id === this.props.workspaceId);
-        const isDisabled = () => !workspace || (workspace.status !== STOPPED);
 
         return (
-            <React.Fragment>
-                <span className={isDisabled() ? 'disabled-delete-workspace' : 'delete-workspace'}
-                      onClick={e => {
-                          e.stopPropagation();
-                          this.onClick(workspace);
-                      }}>
-                    <Tooltip content="Delete Workspace"><span className="fa fa-trash"/></Tooltip>
+            <span className={this.isDisabled() ?
+                'disabled-delete-workspace' :
+                'delete-workspace'}
+                  onClick={e => {
+                      e.stopPropagation();
+                      this.onActionClick();
+                  }}>
+                    <Tooltip entryDelay={200} exitDelay={200} content='Delete Workspace'>
+                        <i className='fa fa-trash'>&nbsp;</i>
+                    </Tooltip>
                 </span>
-            </React.Fragment>
         );
     }
 
-    private onClick(workspace: che.IWorkspace | undefined) {
-        if (workspace && workspace.id) {
-            // TODO It was the fastest way to organize Debouncing. Rework it.
-            this.props.deleteWorkspace(workspace.id, new Date().getTime() / 5000);
+    private onActionClick() {
+        if (this.isDisabled()) {
+            return;
         }
+        this.props.deleteWorkspace(this.props.workspaceId);
+        this.setDebounceDelay();
     }
 }
 
-export default connect(
-    (state: AppState) => state.workspaces, // Selects which state properties are merged into the component's props
-    WorkspacesStore.actionCreators // Selects which action creators are merged into the component's props
-)(DeleteWorkspace);
+export default DeleteWorkspace;

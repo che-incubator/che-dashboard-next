@@ -1,57 +1,61 @@
 import * as React from 'react';
-import {connect} from 'react-redux';
-import {AppState} from '../../../../store';
 import {Tooltip} from '@patternfly/react-core';
-import * as WorkspacesStore from '../../../../store/Workspaces';
 
 import './workspace-status.styl';
 
+// TODO should move these constants to the separate file
 const STOPPED = 'STOPPED';
 const RUNNING = 'RUNNING';
 
-type WorkspaceStatusProps =
-    WorkspacesStore.WorkspacesState // ... state we've requested from the Redux store
-    & WorkspacesStore.IActionCreators // ... plus action creators we've requested
-    & { workspaceId: string; }; // ... plus incoming parameters
+type WorkspaceStatusProps = { workspaceId: string, status: string, startWorkspace: Function, stopWorkspace: Function }; // incoming parameters
 
 class WorkspaceStatus extends React.PureComponent<WorkspaceStatusProps> {
+    // TODO move it to the separate service
+    private timerVar: number | undefined;
+    private isDebounceDelay = false;
+    private setDebounceDelay = (time: number = 5000) => {
+        this.isDebounceDelay = true;
+        if (this.timerVar) {
+            clearTimeout(this.timerVar);
+        }
+        this.timerVar = setTimeout(() => this.isDebounceDelay = false, time);
+    };
+
+    private isDisabled = () => {
+        return this.isDebounceDelay || this.props.status !== STOPPED && this.props.status !== RUNNING;
+    };
 
     public render() {
-        const workspace = this.props.workspaces.find(workspace => workspace.id === this.props.workspaceId);
-        const isDisabled = () => !workspace || (workspace.status !== STOPPED && workspace.status !== RUNNING);
-        const tooltipContent = () => workspace && workspace.status === STOPPED ? 'Run Workspace' : 'Stop workspace';
-        const iconClass = () => workspace && workspace.status === STOPPED ? 'fa fa-play' : 'fa fa-stop';
+        const tooltipContent = () => this.props.status === STOPPED ? 'Run Workspace' : 'Stop workspace';
+        const iconClass = () => this.props.status === STOPPED ? 'fa fa-play' : 'fa fa-stop';
 
         return (
-            <React.Fragment>
-                <span key={`wrks-status-${(workspace as any).id}`}
-                      className={isDisabled() ? 'disabled-workspace-status' : 'workspace-status'}
-                      onClick={e => {
-                          e.stopPropagation();
-                          this.onClick(workspace);
-                      }}>
-                    <Tooltip content={tooltipContent()}><span className={iconClass()}/></Tooltip>
+            <span key={`wrks-status-${this.props.workspaceId}`}
+                  className={this.isDisabled() ? 'disabled-workspace-status' : 'workspace-status'}
+                  onClick={e => {
+                      e.stopPropagation();
+                      this.onActionClick();
+                  }}>
+                    <Tooltip entryDelay={200} exitDelay={200}
+                             content={tooltipContent()}>
+                        <i className={iconClass()}>&nbsp;</i>
+                    </Tooltip>
                 </span>
-            </React.Fragment>
         );
     }
 
-    private onClick(workspace: che.IWorkspace | undefined) {
-        // TODO It was the fastest way to organize Debouncing. Rework it.
-        const startDateIndex = new Date().getTime() / 5000;
-
-        if (workspace && workspace.id) {
-            if (workspace.status === STOPPED) {
-                this.props.startWorkspace(workspace.id, startDateIndex);
-            } else if (workspace.status === RUNNING) {
-                this.props.stopWorkspace(workspace.id, startDateIndex);
-            }
+    private onActionClick() {
+        if (this.isDisabled()) {
+            return;
         }
+        if (this.props.status === STOPPED) {
+            this.props.startWorkspace(this.props.workspaceId);
+        } else if (this.props.status === RUNNING) {
+            this.props.stopWorkspace(this.props.workspaceId);
+        }
+        this.setDebounceDelay();
     }
 
 }
 
-export default connect(
-    (state: AppState) => state.workspaces, // Selects which state properties are merged into the component's props
-    WorkspacesStore.actionCreators // Selects which action creators are merged into the component's props
-)(WorkspaceStatus);
+export default WorkspaceStatus;

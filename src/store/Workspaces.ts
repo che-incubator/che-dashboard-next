@@ -15,36 +15,30 @@ import {JsonRpcMasterApi} from '../services/json-rpc/JsonRpcMasterApi';
 // This state defines the type of data maintained in the Redux store.
 export interface WorkspacesState {
     isLoading: boolean;
-    startDateIndex?: number;
     workspaces: che.IWorkspace[];
 }
 
 interface RequestWorkspacesAction {
     type: 'REQUEST_WORKSPACES';
-    startDateIndex: number;
 }
 
 interface ReceiveWorkspacesAction {
     type: 'RECEIVE_WORKSPACES';
-    startDateIndex: number;
     workspaces: che.IWorkspace[];
 }
 
 interface UpdateWorkspaceAction {
     type: 'UPDATE_WORKSPACE';
-    startDateIndex: number;
     workspace: che.IWorkspace;
 }
 
 interface DeleteWorkspaceAction {
     type: 'DELETE_WORKSPACE';
-    startDateIndex: number;
     workspaceId: string;
 }
 
 interface AddWorkspaceAction {
     type: 'ADD_WORKSPACE';
-    startDateIndex: number;
     workspace: che.IWorkspace;
 }
 
@@ -55,7 +49,7 @@ type KnownAction =
     | DeleteWorkspaceAction
     | AddWorkspaceAction;
 
-enum WorkspaceStatus { RUNNING = 1, STOPPED, PAUSED, STARTING, STOPPING, ERROR}
+export enum WorkspaceStatus { RUNNING = 1, STOPPED, PAUSED, STARTING, STOPPING, ERROR}
 
 const cheJsonRpcApi = container.get(CheJsonRpcApi);
 const cheBranding = container.get(CheBranding);
@@ -65,108 +59,107 @@ let jsonRpcMasterApi: JsonRpcMasterApi;
 const jsonRpcApiLocation = new URL(window.location.href).origin.replace('http', 'ws') + cheBranding.all.websocketContext;
 
 export type IActionCreators = {
-    requestWorkspaces: (startDateIndex: number) => any;
-    startWorkspace: (workspace: string, startDateIndex: number) => any;
-    stopWorkspace: (workspace: string, startDateIndex: number) => any;
-    deleteWorkspace: (workspace: string, startDateIndex: number) => any;
-    createWorkspace: (devfileUrl: string, attributes: { [param: string]: string }, startDateIndex: number) => any;
+    requestWorkspaces: () => any;
+    startWorkspace: (workspace: string) => any;
+    stopWorkspace: (workspace: string) => any;
+    deleteWorkspace: (workspace: string) => any;
+    createWorkspace: (devfileUrl: string, attributes: { [param: string]: string }) => any;
 }
 // ACTION CREATORS - These are functions exposed to UI components that will trigger a state transition.
 // They don't directly mutate state, but they can have external side-effects (such as loading data).
 export const actionCreators: IActionCreators = {
-    // TODO finish with 'startDateIndex' implementation
-    requestWorkspaces: (startDateIndex: number): AppThunkAction<KnownAction> => (dispatch, getState) => {
+
+    requestWorkspaces: (): AppThunkAction<KnownAction> => (dispatch, getState) => {
         // Lazy initialization of jsonRpcMasterApi
         if (!jsonRpcMasterApi) {
             jsonRpcMasterApi = cheJsonRpcApi.getJsonRpcMasterApi(jsonRpcApiLocation);
         }
-        // Only load data if it's something we don't already have (and are not already loading)
         const appState = getState();
-        if (appState && appState.workspaces && startDateIndex !== appState.workspaces.startDateIndex) {
-            fetchWorkspaces()
-                .then(workspaces => {
+        if (appState && appState.workspaces) {
+            const promise = fetchWorkspaces();
+            promise.then(workspaces => {
                     jsonRpcMasterApi.unSubscribeAllWorkspaceStatus();
                     workspaces.forEach(workspace => {
                         jsonRpcMasterApi.subscribeWorkspaceStatus(workspace.id as string, (message: any) => {
                             const status = message.error ? 'ERROR' : message.status;
                             if (WorkspaceStatus[status]) {
                                 workspace.status = status;
-                                dispatch({type: 'UPDATE_WORKSPACE', startDateIndex, workspace});
+                                dispatch({type: 'UPDATE_WORKSPACE', workspace});
                             }
                         });
                     });
-                    dispatch({type: 'RECEIVE_WORKSPACES', startDateIndex, workspaces});
+                    dispatch({type: 'RECEIVE_WORKSPACES', workspaces});
                 });
-            dispatch({type: 'REQUEST_WORKSPACES', startDateIndex});
+            dispatch({type: 'REQUEST_WORKSPACES'});
+            return promise;
         }
+        return Promise.reject();
     },
-    startWorkspace: (workspaceId: string, startDateIndex: number): AppThunkAction<KnownAction> => (dispatch, getState) => {
-        // Only load data if it's something we don't already have (and are not already loading)
+    startWorkspace: (workspaceId: string): AppThunkAction<KnownAction> => (dispatch, getState) => {
         const appState = getState();
-        if (appState && appState.workspaces && startDateIndex !== appState.workspaces.startDateIndex) {
-            startWorkspace(workspaceId)
-                .then(workspace => {
+        if (appState && appState.workspaces) {
+            const promise = startWorkspace(workspaceId);
+            promise.then(workspace => {
                     if (workspace) {
-                        dispatch({type: 'UPDATE_WORKSPACE', startDateIndex, workspace});
+                        dispatch({type: 'UPDATE_WORKSPACE', workspace});
                     }
                 });
-            dispatch({type: 'REQUEST_WORKSPACES', startDateIndex: startDateIndex});
+            dispatch({type: 'REQUEST_WORKSPACES'});
+            return promise;
         }
+        return Promise.reject();
     },
-    stopWorkspace: (workspaceId: string, startDateIndex: number): AppThunkAction<KnownAction> => (dispatch, getState) => {
-        // Only load data if it's something we don't already have (and are not already loading)
+    stopWorkspace: (workspaceId: string): AppThunkAction<KnownAction> => (dispatch, getState) => {
         const appState = getState();
-        if (appState && appState.workspaces && startDateIndex !== appState.workspaces.startDateIndex) {
-            stopWorkspace(workspaceId)
-                .then(workspace => {
+        if (appState && appState.workspaces) {
+            const promise = stopWorkspace(workspaceId);
+            promise.then(workspace => {
                     if (workspace) {
-                        dispatch({type: 'UPDATE_WORKSPACE', startDateIndex, workspace});
+                        dispatch({type: 'UPDATE_WORKSPACE', workspace});
                     }
                 });
-            dispatch({type: 'REQUEST_WORKSPACES', startDateIndex: startDateIndex});
+            dispatch({type: 'REQUEST_WORKSPACES'});
+            return promise;
         }
+        return Promise.reject();
     },
-    deleteWorkspace: (workspaceId: string, startDateIndex: number): AppThunkAction<KnownAction> => (dispatch, getState) => {
-        // Only load data if it's something we don't already have (and are not already loading)
+    deleteWorkspace: (workspaceId: string): AppThunkAction<KnownAction> => (dispatch, getState) => {
         const appState = getState();
-        if (appState && appState.workspaces && startDateIndex !== appState.workspaces.startDateIndex) {
-            deleteWorkspace(workspaceId)
-                .then(() => {
-                    dispatch({type: 'DELETE_WORKSPACE', startDateIndex, workspaceId});
+        if (appState && appState.workspaces) {
+            const promise = deleteWorkspace(workspaceId);
+            promise.then(() => {
+                    dispatch({type: 'DELETE_WORKSPACE', workspaceId});
                 });
-            dispatch({type: 'REQUEST_WORKSPACES', startDateIndex: startDateIndex});
+            dispatch({type: 'REQUEST_WORKSPACES'});
+            return promise;
         }
+        return Promise.reject();
     },
-    createWorkspace: (devfileUrl: string, attr: { [param: string]: string }, startDateIndex: number): AppThunkAction<KnownAction> => (dispatch, getState) => {
+    createWorkspace: (devfileUrl: string, attr: { [param: string]: string }): AppThunkAction<KnownAction> => (dispatch, getState) => {
         // Lazy initialization of jsonRpcMasterApi
         if (!jsonRpcMasterApi) {
             jsonRpcMasterApi = cheJsonRpcApi.getJsonRpcMasterApi(jsonRpcApiLocation);
         }
-        return new Promise<void>((resolve: any, reject: any) => {
-            // Only load data if it's something we don't already have (and are not already loading)
-            const appState = getState();
-            if (appState && appState.workspaces && startDateIndex !== appState.workspaces.startDateIndex) {
-                createWorkspace(devfileUrl, attr)
-                    .then((workspace: any) => {
-                        if (workspace) {
-                            dispatch({type: 'ADD_WORKSPACE', startDateIndex, workspace});
-                            jsonRpcMasterApi.subscribeWorkspaceStatus(workspace.id as string, (message: any) => {
-                                const status = message.error ? 'ERROR' : message.status;
-                                if (WorkspaceStatus[status]) {
-                                    workspace.status = status;
-                                    dispatch({type: 'UPDATE_WORKSPACE', startDateIndex, workspace});
-                                }
-                            });
-                            resolve(workspace);
-                        } else {
-                            reject();
-                        }
-                    }).catch(() => {
-                    reject()
+
+        const appState = getState();
+        if (appState && appState.workspaces) {
+            const promise = createWorkspace(devfileUrl, attr);
+            promise.then((workspace: any) => {
+                    if (workspace) {
+                        dispatch({type: 'ADD_WORKSPACE', workspace});
+                        jsonRpcMasterApi.subscribeWorkspaceStatus(workspace.id as string, (message: any) => {
+                            const status = message.error ? 'ERROR' : message.status;
+                            if (WorkspaceStatus[status]) {
+                                workspace.status = status;
+                                dispatch({type: 'UPDATE_WORKSPACE', workspace});
+                            }
+                        });
+                    }
                 });
-                dispatch({type: 'REQUEST_WORKSPACES', startDateIndex: startDateIndex});
-            }
-        });
+            dispatch({type: 'REQUEST_WORKSPACES'});
+            return promise;
+        }
+        return Promise.reject();
     }
 };
 
@@ -181,13 +174,11 @@ export const reducer: Reducer<WorkspacesState> = (state: WorkspacesState | undef
     switch (action.type) {
         case 'REQUEST_WORKSPACES':
             return {
-                startDateIndex: action.startDateIndex,
                 workspaces: state.workspaces,
                 isLoading: true
             };
         case 'UPDATE_WORKSPACE':
             return {
-                startDateIndex: action.startDateIndex,
                 workspaces: state.workspaces.map((workspace: che.IWorkspace) => {
                     return workspace.id === action.workspace.id ? action.workspace : workspace;
                 }),
@@ -195,22 +186,17 @@ export const reducer: Reducer<WorkspacesState> = (state: WorkspacesState | undef
             };
         case 'ADD_WORKSPACE':
             return {
-                startDateIndex: action.startDateIndex,
                 workspaces: state.workspaces.concat([action.workspace]),
                 isLoading: false
             };
         case 'DELETE_WORKSPACE':
             return {
-                startDateIndex: action.startDateIndex,
                 workspaces: state.workspaces.filter(workspace => workspace.id !== action.workspaceId),
                 isLoading: false
             };
         case 'RECEIVE_WORKSPACES':
-            // Accept the incoming data if it matches the most recent request. For correct
-            // handle out-of-order responses.
-            if (action.startDateIndex === state.startDateIndex) {
+            if (action) {
                 return {
-                    startDateIndex: action.startDateIndex,
                     workspaces: action.workspaces,
                     isLoading: false
                 };

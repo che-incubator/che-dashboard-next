@@ -60,12 +60,12 @@ export class PreloadData {
 
     private updateWorkspaces(): void {
         const requestWorkspaces = WorkspacesStore.actionCreators.requestWorkspaces;
-        requestWorkspaces(0)(this.store.dispatch, () => ({workspaces: {workspaces: []}} as any));
+        requestWorkspaces()(this.store.dispatch, () => ({workspaces: {workspaces: []}} as any));
     }
 
     private updateDevfilesRegistry(): void {
         const requestWorkspaces = DevfilesRegistry.actionCreators.requestDevfiles;
-        requestWorkspaces(0)(this.store.dispatch, () => ({devfilesRegistry: {data: []}} as any));
+        requestWorkspaces()(this.store.dispatch, () => ({devfilesRegistry: {data: []}} as any));
     }
 
     private updateKeycloakUserInfo(): void {

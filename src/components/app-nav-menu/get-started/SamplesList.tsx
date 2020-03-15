@@ -3,6 +3,7 @@ import {connect} from 'react-redux';
 import {AppState} from '../../../store';
 import * as DevfilesRegistryStore from '../../../store/DevfilesRegistry';
 import * as WorkspacesStore from '../../../store/Workspaces';
+import CheProgress from '../../app-common/progress/progress';
 import {Gallery, PageSection, PageSectionVariants, Text, TextContent} from '@patternfly/react-core';
 
 import './samples-list.styl';
@@ -10,28 +11,30 @@ import './samples-list.styl';
 
 // At runtime, Redux will merge together...
 type DevfilesRegistryProps =
-    { devfilesRegistry: DevfilesRegistryStore.DevfilesState }// ... state we've requested from the Redux store
-    & WorkspacesStore.IActionCreators
-    & { history: any }; // ... plus action creators we've requested
+    {
+        devfilesRegistry: DevfilesRegistryStore.DevfilesState,
+        workspaces: WorkspacesStore.WorkspacesState
+    }// ... state we've requested from the Redux store
+    & WorkspacesStore.IActionCreators // ... plus action creators we've requested
+    & { history: any };
 
 export class SamplesList extends React.PureComponent<DevfilesRegistryProps> {
 
     public render() {
-        const data = this.props.devfilesRegistry.data && this.props.devfilesRegistry.data[0] ? this.props.devfilesRegistry.data[0] : {};
-        const registryUrl = (data as any).registryUrl || '';
-        const devfiles: [] = (data as any).devfiles || [];
+        const {data} = this.props.devfilesRegistry;
 
-        const createWorkspace = (devfile: che.IDevfileMetaData) => {
+        const createWorkspace = (registryUrl: string, devfile: che.IDevfileMetaData) => {
             if (!devfile.links || !devfile.links.self) {
                 return;
             }
             const devfileUrl = registryUrl + devfile.links.self;
-            // TODO It was the fastest way to organize Debouncing. Rework it.
-            const timeLabel = Math.round(new Date().getTime() / 5000);
-            const promise = this.props.createWorkspace(devfileUrl, {stackName: devfile.displayName}, timeLabel);
-            promise.then((workspace: che.IWorkspace) => {
-                this.props.history.push(`/ide/${workspace.namespace}/${workspace.devfile.metadata.name}`);
-            })
+            const attr = {stackName: devfile.displayName};
+            this.props.createWorkspace(devfileUrl, attr).then((workspace: che.IWorkspace) => {
+                // force start for the new workspace
+                this.props.startWorkspace(`${workspace.id}`).then(() => {
+                    this.props.history.push(`/ide/${workspace.namespace}/${workspace.devfile.metadata.name}`);
+                });
+            });
         };
 
         return (
@@ -44,21 +47,26 @@ export class SamplesList extends React.PureComponent<DevfilesRegistryProps> {
                         </Text>
                     </TextContent>
                 </PageSection>
+                <CheProgress isLoading={this.props.workspaces.isLoading}/>
                 <PageSection>
                     <Gallery gutter='md'>
-                        {devfiles.map((devfile: che.IDevfileMetaData, i) => (
-                            <div className='pf-c-card pf-m-hoverable pf-m-compact pf-m-selectable get-started-template'
-                                 tabIndex={-1} key={i} onClick={() => createWorkspace(devfile)}>
-                                <div className='pf-c-card__head'>
-                                    <img src={registryUrl + devfile.icon}/>
+                        {data.map((data: { devfiles: che.IDevfileMetaData[], registryUrl: string }, index: number) => (
+                            data.devfiles.map((devfile: che.IDevfileMetaData, key: number) => (
+                                <div
+                                    className='pf-c-card pf-m-hoverable pf-m-compact get-started-template'
+                                    key={`${index}_${key}`}
+                                    onClick={() => createWorkspace(data.registryUrl, devfile)}>
+                                    <div className='pf-c-card__head'>
+                                        <img src={`${data.registryUrl}${devfile.icon}`}/>
+                                    </div>
+                                    <div className='pf-c-card__header pf-c-title pf-m-md'>
+                                        <b>{devfile.displayName}</b>
+                                    </div>
+                                    <div className='pf-c-card__body'>
+                                        {devfile.description}
+                                    </div>
                                 </div>
-                                <div className='pf-c-card__header pf-c-title pf-m-md'>
-                                    <b>{devfile.displayName}</b>
-                                </div>
-                                <div className='pf-c-card__body'>
-                                    {devfile.description}
-                                </div>
-                            </div>
+                            ))
                         ))}
                     </Gallery>
                 </PageSection>
@@ -74,4 +82,4 @@ export default connect(
     }, // Selects which state properties are merged into the component's props(devfilesRegistry and workspaces)
     WorkspacesStore.actionCreators // Selects which action creators are merged into the component's props
 
-)(SamplesList as any);
+)(SamplesList);
