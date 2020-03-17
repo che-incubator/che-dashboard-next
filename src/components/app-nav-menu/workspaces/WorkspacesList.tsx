@@ -17,7 +17,7 @@ const SECTION_THEME = PageSectionVariants.light;
 
 // At runtime, Redux will merge together...
 type WorkspacesProps =
-    { workspaces: WorkspacesStore.WorkspacesState, branding: BrandingState } // ... state we've requested from the Redux store
+    { workspaces: WorkspacesStore.WorkspacesState, branding: { branding: BrandingState } } // ... state we've requested from the Redux store
     & WorkspacesStore.IActionCreators // ... plus action creators we've requested
     & { history: any };
 
@@ -33,7 +33,7 @@ export class WorkspacesList extends React.PureComponent<WorkspacesProps> {
         this.timerVar = setTimeout(() => this.isDebounceDelay = false, time);
     };
 
-    private docs: IBrandingDocs = this.props.branding.branding.branding as any;
+    private docs = this.props.branding.branding.branding.docs as IBrandingDocs;
 
     // This method is called when the component is first added to the document
     public componentDidMount() {
@@ -47,8 +47,7 @@ export class WorkspacesList extends React.PureComponent<WorkspacesProps> {
 
     public render() {
         const onRowClick = (workspace: che.IWorkspace) => {
-            // TODO rework this native js solution(push history doesn't work).
-            window.location.href = `#/workspace/${workspace.namespace}/${workspace.devfile.metadata.name}`;
+            this.props.history.push(`/workspace/${workspace.namespace}/${workspace.devfile.metadata.name}`);
         };
 
         const columns = ['NAME', 'RAM', 'PROJECTS', 'STACK', 'ACTIONS'];

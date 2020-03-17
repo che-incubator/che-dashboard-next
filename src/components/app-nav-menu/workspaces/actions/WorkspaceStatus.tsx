@@ -22,7 +22,7 @@ class WorkspaceStatus extends React.PureComponent<WorkspaceStatusProps> {
     };
 
     private isDisabled = () => {
-        return this.isDebounceDelay || this.props.status !== STOPPED && this.props.status !== RUNNING;
+        return this.isDebounceDelay || (this.props.status !== STOPPED && this.props.status !== RUNNING);
     };
 
     public render() {
