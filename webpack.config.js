@@ -5,7 +5,7 @@ const stylus_plugin = require('poststylus');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = env => {
-    const server = env && env.server ? env.server : 'https://che.openshift.io/';
+    const proxyTarget = env && env.server ? env.server : 'https://che.openshift.io/';
 
     return {
         entry: [
@@ -69,20 +69,20 @@ module.exports = env => {
             stats: 'errors-only',
             proxy: {
                 '/api/websocket': {
-                    target: server,
+                    target: proxyTarget,
                     ws: true,
                     secure: false,
                     changeOrigin: true,
                     headers: {
-                        origin: server
+                        origin: proxyTarget
                     }
                 },
                 '/api': {
-                    target: server,
+                    target: proxyTarget,
                     secure: false,
                     changeOrigin: true,
                     headers: {
-                        origin: server
+                        origin: proxyTarget
                     },
                     bypass(req) {
                         if (req.url === '/api/nope') {
@@ -91,11 +91,11 @@ module.exports = env => {
                     },
                 },
                 '/workspace-loader': {
-                    target: server,
+                    target: proxyTarget,
                     secure: false,
                     changeOrigin: true,
                     headers: {
-                        origin: server
+                        origin: proxyTarget
                     }
                 },
             },
