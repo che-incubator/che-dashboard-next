@@ -23,7 +23,7 @@ import {
 import {container} from '../../inversify.config';
 import './nav-menu.styl';
 import {Keycloak} from '../../services/keycloak/Keycloak';
-import {WorkspaceIndicator} from './WorkspaceIndicator';
+import WorkspaceIndicator from './workspaces/workspace-indicator/WorkspaceIndicator';
 
 const DARK = 'dark';
 const LIGHT = 'light';

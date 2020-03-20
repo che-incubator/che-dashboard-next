@@ -5,7 +5,7 @@ import * as WorkspacesStore from '../../../store/Workspaces';
 import {Button, PageSection, PageSectionVariants, Text} from '@patternfly/react-core';
 import CheProgress from '../../app-common/progress/progress';
 import {Table, TableBody, TableHeader} from '@patternfly/react-table';
-import {WorkspaceIndicator} from '../WorkspaceIndicator';
+import WorkspaceIndicator from './workspace-indicator/WorkspaceIndicator';
 import WorkspaceStatus from './actions/WorkspaceStatus';
 import DeleteWorkspace from './actions/DeleteWorkspace';
 import {IBrandingDocs} from '../../../services/bootstrap/branding.constant';
