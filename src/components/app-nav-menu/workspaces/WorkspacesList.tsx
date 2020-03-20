@@ -10,6 +10,8 @@ import WorkspaceStatus from './actions/WorkspaceStatus';
 import DeleteWorkspace from './actions/DeleteWorkspace';
 import {IBrandingDocs} from '../../../services/bootstrap/branding.constant';
 import {BrandingState} from '../../../store/Branding';
+import {Debounce} from '../../../services/debounce/Debounce';
+import {container} from '../../../inversify.config';
 
 import './workspaces-list.styl';
 
@@ -22,18 +24,15 @@ type WorkspacesProps =
     & { history: any };
 
 export class WorkspacesList extends React.PureComponent<WorkspacesProps> {
-    // TODO move it to the separate service
-    private timerVar: number | undefined;
-    private isDebounceDelay = false;
-    private setDebounceDelay = (time: number = 5000) => {
-        this.isDebounceDelay = true;
-        if (this.timerVar) {
-            clearTimeout(this.timerVar);
-        }
-        this.timerVar = setTimeout(() => this.isDebounceDelay = false, time);
-    };
+    private docs: IBrandingDocs;
+    private debounce: Debounce;
 
-    private docs = this.props.branding.branding.branding.docs as IBrandingDocs;
+    constructor(props: WorkspacesProps) {
+        super(props);
+
+        this.docs = this.props.branding.branding.branding.docs as IBrandingDocs;
+        this.debounce = container.get(Debounce);
+    }
 
     // This method is called when the component is first added to the document
     public componentDidMount() {
@@ -67,12 +66,12 @@ export class WorkspacesList extends React.PureComponent<WorkspacesProps> {
                         {workspace.attributes && workspace.attributes.stackName ? workspace.attributes.stackName : ''}
                     </span>,
                 <span>
-                        <WorkspaceStatus key={`status_${key}`}
+                        <WorkspaceStatus key={`status_${workspace.id}${workspace.status}`}
                                          workspaceId={workspace.id as string}
                                          status={workspace.status as string}
                                          startWorkspace={this.props.startWorkspace}
                                          stopWorkspace={this.props.stopWorkspace}/>
-                        <DeleteWorkspace key={`delete_${key}`}
+                        <DeleteWorkspace key={`delete_${workspace.id}${workspace.status}`}
                                          workspaceId={workspace.id as string}
                                          status={workspace.status as string}
                                          deleteWorkspace={this.props.deleteWorkspace}/>
@@ -112,11 +111,11 @@ export class WorkspacesList extends React.PureComponent<WorkspacesProps> {
     }
 
     private ensureDataFetched() {
-        if (this.isDebounceDelay) {
+        if (this.debounce.hasDelay()) {
             return;
         }
         this.props.requestWorkspaces();
-        this.setDebounceDelay();
+        this.debounce.setDelay();
     }
 }
 

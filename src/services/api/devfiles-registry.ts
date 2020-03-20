@@ -7,7 +7,11 @@ const fetchDevfiles = (): Promise<{ devfiles: che.IDevfileMetaData[], registryUr
         return axios.get(`${registryUrl}/devfiles/index.json`).then((resp: { data: che.IDevfileMetaData[] } ) => {
                 const devfiles = resp.data;
                 return Promise.resolve({devfiles, registryUrl});
+        }).catch(error => {
+            return Promise.reject(error.response);
         });
+    }).catch(error => {
+        return Promise.reject(error.response);
     });
 };
 // return new Promise<void>((resolve: IResolveFn<void>, reject: IRejectFn<void>) => {

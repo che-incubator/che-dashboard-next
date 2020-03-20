@@ -4,24 +4,32 @@ import {load} from 'js-yaml';
 export const fetchWorkspaces = (): Promise<Array<che.IWorkspace>> => {
     return axios.get('/api/workspace').then(resp => {
         return Promise.resolve(resp.data);
+    }).catch(error => {
+        return Promise.reject(error.response);
     });
 };
 
 export const startWorkspace = (workspaceId: string): Promise<che.IWorkspace> => {
     return axios.post(`/api/workspace/${workspaceId}/runtime`).then(resp => {
         return Promise.resolve(resp.data);
+    }).catch(error => {
+        return Promise.reject(error.response);
     });
 };
 
 export const stopWorkspace = (workspaceId: string): Promise<che.IWorkspace> => {
     return axios.delete(`/api/workspace/${workspaceId}/runtime`).then(resp => {
         return Promise.resolve(resp.data);
+    }).catch(error => {
+        return Promise.reject(error.response);
     });
 };
 
 export const deleteWorkspace = (workspaceId: string): Promise<che.IWorkspace> => {
     return axios.delete(`/api/workspace/${workspaceId}`).then(resp => {
         return Promise.resolve(resp.data);
+    }).catch(error => {
+        return Promise.reject(error.response);
     });
 };
 
@@ -34,6 +42,8 @@ export const createWorkspace = (devfileUrl: string, attr: { [param: string]: str
             params: {attribute: `stackName:${attr.stackName}`}
         }).then(resp => {
             return Promise.resolve(resp.data);
+        }).catch(error => {
+            return Promise.reject(error.response);
         });
     });
 };

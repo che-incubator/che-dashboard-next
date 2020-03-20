@@ -1,5 +1,7 @@
 import * as React from 'react';
 import {Tooltip} from '@patternfly/react-core';
+import {container} from '../../../../inversify.config';
+import {Debounce} from '../../../../services/debounce/Debounce';
 
 import './delete-workspace.styl';
 
@@ -8,20 +10,25 @@ const STOPPED = 'STOPPED';
 
 type DeleteWorkspaceProps = { workspaceId: string, status: string, deleteWorkspace: Function }; // incoming parameters
 
-class DeleteWorkspace extends React.PureComponent<DeleteWorkspaceProps> {
-    // TODO move it to the separate service
-    private timerVar: number | undefined;
-    private isDebounceDelay = false;
-    private setDebounceDelay = (time: number = 5000) => {
-        this.isDebounceDelay = true;
-        if (this.timerVar) {
-            clearTimeout(this.timerVar);
-        }
-        this.timerVar = setTimeout(() => this.isDebounceDelay = false, time);
-    };
+class DeleteWorkspace extends React.PureComponent<DeleteWorkspaceProps, { isDebounceDelay: boolean }> {
+    private debounce: Debounce;
+
+    constructor(props: DeleteWorkspaceProps) {
+        super(props);
+
+        this.debounce = container.get(Debounce);
+        this.debounce.subscribe(isDebounceDelay => {
+            this.setState({isDebounceDelay})
+        });
+    }
+
+    // This method is called when the component is removed from the document
+    componentWillUnmount() {
+        this.debounce.unsubscribeAll();
+    }
 
     private isDisabled = () => {
-        return this.isDebounceDelay || this.props.status !== STOPPED;
+        return this.debounce.hasDelay() || this.props.status !== STOPPED;
     };
 
     public render() {
@@ -46,7 +53,7 @@ class DeleteWorkspace extends React.PureComponent<DeleteWorkspaceProps> {
             return;
         }
         this.props.deleteWorkspace(this.props.workspaceId);
-        this.setDebounceDelay();
+        this.debounce.setDelay();
     }
 }
 

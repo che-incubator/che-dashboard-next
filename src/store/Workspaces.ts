@@ -22,6 +22,10 @@ interface RequestWorkspacesAction {
     type: 'REQUEST_WORKSPACES';
 }
 
+interface ReceiveErrorAction {
+    type: 'RECEIVE_ERROR';
+}
+
 interface ReceiveWorkspacesAction {
     type: 'RECEIVE_WORKSPACES';
     workspaces: che.IWorkspace[];
@@ -44,6 +48,7 @@ interface AddWorkspaceAction {
 
 type KnownAction =
     RequestWorkspacesAction
+    | ReceiveErrorAction
     | ReceiveWorkspacesAction
     | UpdateWorkspaceAction
     | DeleteWorkspaceAction
@@ -78,18 +83,21 @@ export const actionCreators: IActionCreators = {
         if (appState && appState.workspaces) {
             const promise = fetchWorkspaces();
             promise.then(workspaces => {
-                    jsonRpcMasterApi.unSubscribeAllWorkspaceStatus();
-                    workspaces.forEach(workspace => {
-                        jsonRpcMasterApi.subscribeWorkspaceStatus(workspace.id as string, (message: any) => {
-                            const status = message.error ? 'ERROR' : message.status;
-                            if (WorkspaceStatus[status]) {
-                                workspace.status = status;
-                                dispatch({type: 'UPDATE_WORKSPACE', workspace});
-                            }
-                        });
+                jsonRpcMasterApi.unSubscribeAllWorkspaceStatus();
+                workspaces.forEach(workspace => {
+                    jsonRpcMasterApi.subscribeWorkspaceStatus(workspace.id as string, (message: any) => {
+                        const status = message.error ? 'ERROR' : message.status;
+                        if (WorkspaceStatus[status]) {
+                            workspace.status = status;
+                            dispatch({type: 'UPDATE_WORKSPACE', workspace});
+                        }
                     });
-                    dispatch({type: 'RECEIVE_WORKSPACES', workspaces});
                 });
+                dispatch({type: 'RECEIVE_WORKSPACES', workspaces});
+            }).catch(error => {
+                dispatch({type: 'RECEIVE_ERROR'});
+                return Promise.reject(error);
+            });
             dispatch({type: 'REQUEST_WORKSPACES'});
             return promise;
         }
@@ -100,10 +108,13 @@ export const actionCreators: IActionCreators = {
         if (appState && appState.workspaces) {
             const promise = startWorkspace(workspaceId);
             promise.then(workspace => {
-                    if (workspace) {
-                        dispatch({type: 'UPDATE_WORKSPACE', workspace});
-                    }
-                });
+                if (workspace) {
+                    dispatch({type: 'UPDATE_WORKSPACE', workspace});
+                }
+            }).catch(error => {
+                dispatch({type: 'RECEIVE_ERROR'});
+                return Promise.reject(error);
+            });
             dispatch({type: 'REQUEST_WORKSPACES'});
             return promise;
         }
@@ -114,10 +125,13 @@ export const actionCreators: IActionCreators = {
         if (appState && appState.workspaces) {
             const promise = stopWorkspace(workspaceId);
             promise.then(workspace => {
-                    if (workspace) {
-                        dispatch({type: 'UPDATE_WORKSPACE', workspace});
-                    }
-                });
+                if (workspace) {
+                    dispatch({type: 'UPDATE_WORKSPACE', workspace});
+                }
+            }).catch(error => {
+                dispatch({type: 'RECEIVE_ERROR'});
+                return Promise.reject(error);
+            });
             dispatch({type: 'REQUEST_WORKSPACES'});
             return promise;
         }
@@ -128,8 +142,11 @@ export const actionCreators: IActionCreators = {
         if (appState && appState.workspaces) {
             const promise = deleteWorkspace(workspaceId);
             promise.then(() => {
-                    dispatch({type: 'DELETE_WORKSPACE', workspaceId});
-                });
+                dispatch({type: 'DELETE_WORKSPACE', workspaceId});
+            }).catch(error => {
+                dispatch({type: 'RECEIVE_ERROR'});
+                return Promise.reject(error);
+            });
             dispatch({type: 'REQUEST_WORKSPACES'});
             return promise;
         }
@@ -145,17 +162,20 @@ export const actionCreators: IActionCreators = {
         if (appState && appState.workspaces) {
             const promise = createWorkspace(devfileUrl, attr);
             promise.then((workspace: any) => {
-                    if (workspace) {
-                        dispatch({type: 'ADD_WORKSPACE', workspace});
-                        jsonRpcMasterApi.subscribeWorkspaceStatus(workspace.id as string, (message: any) => {
-                            const status = message.error ? 'ERROR' : message.status;
-                            if (WorkspaceStatus[status]) {
-                                workspace.status = status;
-                                dispatch({type: 'UPDATE_WORKSPACE', workspace});
-                            }
-                        });
-                    }
-                });
+                if (workspace) {
+                    dispatch({type: 'ADD_WORKSPACE', workspace});
+                    jsonRpcMasterApi.subscribeWorkspaceStatus(workspace.id as string, (message: any) => {
+                        const status = message.error ? 'ERROR' : message.status;
+                        if (WorkspaceStatus[status]) {
+                            workspace.status = status;
+                            dispatch({type: 'UPDATE_WORKSPACE', workspace});
+                        }
+                    });
+                }
+            }).catch(error => {
+                dispatch({type: 'RECEIVE_ERROR'});
+                return Promise.reject(error);
+            });
             dispatch({type: 'REQUEST_WORKSPACES'});
             return promise;
         }
@@ -176,6 +196,11 @@ export const reducer: Reducer<WorkspacesState> = (state: WorkspacesState | undef
             return {
                 workspaces: state.workspaces,
                 isLoading: true
+            };
+        case 'RECEIVE_ERROR':
+            return {
+                workspaces: state.workspaces,
+                isLoading: false
             };
         case 'UPDATE_WORKSPACE':
             return {
