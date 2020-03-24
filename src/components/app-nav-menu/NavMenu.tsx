@@ -49,7 +49,7 @@ export class NavMenu extends React.PureComponent<any, any> {
 
         const currentTheme = window.sessionStorage.getItem('theme');
         const theme = currentTheme ? currentTheme : DARK;
-        this.state = {isDropdownOpen: false, activeItem: '', isNavOpen: true, theme};
+        this.state = {isDropdownOpen: false, activeItem: '/getstarted', isNavOpen: true, theme};
 
         const keycloak = container.get(Keycloak);
 

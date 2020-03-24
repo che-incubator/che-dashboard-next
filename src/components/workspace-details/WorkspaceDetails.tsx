@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {connect} from 'react-redux';
 import {RouteComponentProps} from 'react-router';
-import {Gallery, PageSection, PageSectionVariants, Text, TextContent} from '@patternfly/react-core';
+import {PageSection, PageSectionVariants, Text, TextContent, Tabs, Tab} from '@patternfly/react-core';
 import {AppState} from '../../store';
 import * as WorkspacesStore from '../../store/Workspaces';
 import {Debounce} from '../../services/debounce/Debounce';
@@ -19,8 +19,11 @@ type WorkspaceDetailsProps =
     & { history: any } // ... plus history
     & RouteComponentProps<{ namespace: string, workspaceName: string }>; // incoming parameters
 
-class WorkspaceDetails extends React.PureComponent<WorkspaceDetailsProps, { workspace?: che.IWorkspace }> {
+type WorkspaceDetailsState = { activeTabKey: number, workspace?: che.IWorkspace };
+
+class WorkspaceDetails extends React.PureComponent<WorkspaceDetailsProps, WorkspaceDetailsState> {
     private debounce: Debounce;
+    private readonly handleTabClick: (event: any, tabIndex: any) => void;
 
 
     constructor(props: WorkspaceDetailsProps) {
@@ -36,7 +39,13 @@ class WorkspaceDetails extends React.PureComponent<WorkspaceDetailsProps, { work
             this.props.history.push('/');
         }
 
-        this.state = {workspace};
+        const activeTabKey = 4;
+        this.state = {workspace, activeTabKey};
+
+        // Toggle currently active tab
+        this.handleTabClick = (event: any, tabIndex: any) => {
+            this.setState({activeTabKey: tabIndex});
+        };
     }
 
     public render() {
@@ -54,10 +63,26 @@ class WorkspaceDetails extends React.PureComponent<WorkspaceDetailsProps, { work
                     </TextContent>
                 </PageSection>
                 <PageSection variant={SECTION_THEME}>
-                    <TextContent className='workspace-details-editor'>
-                        <Text component='h3' className='label'>Workspace</Text>
-                        <DevfileEditor devfile={workspace.devfile}/>
-                    </TextContent>
+                    <Tabs activeKey={this.state.activeTabKey} onSelect={this.handleTabClick}>
+                        <Tab eventKey={0} title="Overview">
+                            <br/><p>Tab 1 section</p>
+                        </Tab>
+                        <Tab eventKey={1} title="Projects">
+                            <br/><p>Tab 2 section</p>
+                        </Tab>
+                        <Tab eventKey={2} title="Plugins">
+                            <br/><p>Tab 3 section</p>
+                        </Tab>
+                        <Tab eventKey={3} title="Editors">
+                            <br/><p>Tab 4 section</p>
+                        </Tab>
+                        <Tab eventKey={4} title="Devfile">
+                            <TextContent className='workspace-details-editor'>
+                                <Text component='h3' className='label'>Workspace</Text>
+                                <DevfileEditor devfile={workspace.devfile}/>
+                            </TextContent>
+                        </Tab>
+                    </Tabs>
                 </PageSection>
             </React.Fragment>
         );

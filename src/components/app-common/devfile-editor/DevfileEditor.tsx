@@ -19,6 +19,7 @@ const MONACO_CONFIG = {language: 'yaml', wordWrap: 'on', lineNumbers: 'on', matc
 
 type Props = { devfilesRegistry: DevfilesRegistry.DevfilesState, branding: { branding: BrandingState } } // Redux store
     & { devfile: che.IWorkspaceDevfile, onChange?: (devfile: che.IWorkspaceDevfile) => void }; // incoming parameters
+
 class DevfileEditor extends React.PureComponent<Props> {
     private editor: any;
     private yamlService: any;
@@ -33,13 +34,15 @@ class DevfileEditor extends React.PureComponent<Props> {
 
     constructor(props: Props) {
         super(props);
-
-        // TODO add loading the web worker code in main thread
-        this.yamlService = yamlLanguageServer.getLanguageService(() => Promise.resolve(''), {} as any, []);
-        // register Themes
-        registerCustomThemes();
-        // define the Theme
-        Monaco.editor.setTheme(EDITOR_THEME);
+        // lazy initialization
+        if (!window['yamlService']) {
+            // TODO add loading the web worker code in main thread
+            this.yamlService = yamlLanguageServer.getLanguageService(() => Promise.resolve(''), {} as any, []);
+            window['yamlService'] = this.yamlService;
+        } else {
+            this.yamlService = window['yamlService'];
+            return;
+        }
         // register the YAML language with Monaco
         Monaco.languages.register({
             id: LANGUAGE_ID,
@@ -49,20 +52,23 @@ class DevfileEditor extends React.PureComponent<Props> {
         });
         Monaco.languages.setMonarchTokensProvider(LANGUAGE_ID, language);
         Monaco.languages.setLanguageConfiguration(LANGUAGE_ID, conf);
+        // register language server providers
+        this.registerLanguageServerProviders(Monaco.languages);
         // add the devfile schema into yaml language server configuration
-        const jsonSchema = this.props.devfilesRegistry.data[0].jsonSchema;
-        if (jsonSchema) {
-            this.yamlService.configure({
-                validate: true,
-                schemas: [{
-                    uri: 'inmemory:yaml',
-                    fileMatch: ['*'],
-                    schema: jsonSchema
-                }],
-                hover: true,
-                completion: true,
-            });
-        }
+        this.yamlService.configure({
+            validate: true,
+            schemas: [{
+                uri: 'inmemory:yaml',
+                fileMatch: ['*'],
+                schema: this.props.devfilesRegistry.data[0].jsonSchema || {}
+            }],
+            hover: true,
+            completion: true,
+        });
+        // register custom themes
+        registerCustomThemes();
+        // define the default
+        Monaco.editor.setTheme(EDITOR_THEME);
     }
 
     // This method is called when the component is first added to the document
@@ -70,16 +76,15 @@ class DevfileEditor extends React.PureComponent<Props> {
         const element = $('.devfile-editor .monaco').get(0);
         if (element) {
             const value = dump(this.props.devfile, {'indent': 1});
-            const monacoConfig = Object.assign({value}, MONACO_CONFIG);
-            this.editor = monaco.editor.create(element, monacoConfig);
-            this.editor.layout({height: '600', width: '1000'} as any);
+            this.editor = monaco.editor.create(element, Object.assign({value}, MONACO_CONFIG));
+            this.editor.layout({height: '600', width: '1000'});
             const doc = this.editor.getModel();
             doc.updateOptions({tabSize: 2});
             doc.onDidChangeContent(() => {
                 this.onChange(this.editor.getValue());
             });
-            this.registerLanguageServerProviders();
-            this.initLanguageServerValidation();
+            // init language server validation
+            this.initLanguageServerValidation(this.editor);
         }
     }
 
@@ -116,13 +121,13 @@ class DevfileEditor extends React.PureComponent<Props> {
         }
     }
 
-    private registerLanguageServerProviders(): void {
+    private registerLanguageServerProviders(languages: any): void {
         const createDocument = this.createDocument;
         const yamlService = this.yamlService;
         const m2p = this.m2p as any;
         const p2m = this.p2m as any;
 
-        monaco.languages.registerCompletionItemProvider(LANGUAGE_ID, {
+        languages.registerCompletionItemProvider(LANGUAGE_ID, {
             provideCompletionItems(model: any, position: any) {
                 const document = createDocument(model);
                 return yamlService
@@ -135,12 +140,12 @@ class DevfileEditor extends React.PureComponent<Props> {
                     .then(result => p2m.asCompletionItem(result));
             },
         });
-        monaco.languages.registerDocumentSymbolProvider(LANGUAGE_ID, {
+        languages.registerDocumentSymbolProvider(LANGUAGE_ID, {
             provideDocumentSymbols(model: any) {
                 return p2m.asSymbolInformations(yamlService.findDocumentSymbols(createDocument(model)));
             },
         });
-        monaco.languages.registerHoverProvider(LANGUAGE_ID, {
+        languages.registerHoverProvider(LANGUAGE_ID, {
             provideHover(model: any, position: any) {
                 return yamlService
                     .doHover(createDocument(model), m2p.asPosition(position.lineNumber, position.column))
@@ -149,8 +154,8 @@ class DevfileEditor extends React.PureComponent<Props> {
         });
     }
 
-    private initLanguageServerValidation(): void {
-        const model = monaco.editor.getModels()[0];
+    private initLanguageServerValidation(editor: any): void {
+        const model = editor.getModel();
         const pendingValidationRequests = new Map();
 
         model.onDidChangeContent(() => {
