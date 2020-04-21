@@ -1,16 +1,16 @@
 import { CheJsonRpcApiClient } from './JsonRpcApiService';
 import { ICommunicationClient, CommunicationClientEvent } from './JsonRpcClient';
-import {Keycloak} from '../keycloak/Keycloak';
-import {container} from '../../inversify.config';
-import {WebsocketClient} from "./WebsocketClient";
+import { Keycloak } from '../keycloak/Keycloak';
+import { container } from '../../inversify.config';
+import { WebsocketClient } from "./WebsocketClient";
 
 export enum MasterChannels {
   ENVIRONMENT_OUTPUT = 'runtime/log',
   ENVIRONMENT_STATUS = 'machine/statusChanged',
   WORKSPACE_STATUS = 'workspace/statusChanged'
 }
-const SUBSCRIBE: string = 'subscribe';
-const UNSUBSCRIBE: string = 'unsubscribe';
+const SUBSCRIBE = 'subscribe';
+const UNSUBSCRIBE = 'unsubscribe';
 
 /**
  * Client API for workspace master interactions.
@@ -22,7 +22,7 @@ export class JsonRpcMasterApi {
   private clientId: string;
 
   constructor(
-      private readonly entryPoint: string,
+    private readonly entryPoint: string,
   ) {
     this.keycloak = container.get(Keycloak);
     this.client = container.get(WebsocketClient);
@@ -68,7 +68,7 @@ export class JsonRpcMasterApi {
     return new Promise(resolve => {
       this.keycloak.updateToken(5).then(() => {
         resolve('?token=' + (window as any)._keycloak.token);
-      }).catch((error: any ) => {
+      }).catch((error: any) => {
         resolve('');
       });
     });
