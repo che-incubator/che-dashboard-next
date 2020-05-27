@@ -2,7 +2,6 @@ import React from 'react';
 import { Redirect, Route } from 'react-router';
 import { ConnectedRouter as Router } from 'connected-react-router';
 import Layout from './app-nav-menu/Layout';
-import Dashboard from './app-nav-menu/dashboard/Dashboard';
 import loadable from 'react-loadable';
 
 import './app.styl';
@@ -15,30 +14,29 @@ type Item = {
 };
 
 const fallback = <div>loading....</div>;
-const SamplesListLoadable = loadable({
-  loader: () => import('./app-nav-menu/get-started/SamplesList'),
+const GetStartedPageLoadable = loadable({
+  loader: () => import('./app-nav-menu/get-started/GetStartedPage'),
   loading: () => fallback,
 });
 const WorkspacesListLoadable = loadable({
-  loader: () => import('./app-nav-menu/workspaces/WorkspacesList'), 
+  loader: () => import('./app-nav-menu/workspaces/WorkspacesList'),
   loading: () => fallback,
 });
 const AdministrationLoadable = loadable({
-  loader: () => import('./app-nav-menu/administration/Administration'), 
+  loader: () => import('./app-nav-menu/administration/Administration'),
   loading: () => fallback,
 });
 const WorkspaceDetailsLoadable = loadable({
-  loader: () => import('./workspace-details/WorkspaceDetails'), 
+  loader: () => import('./workspace-details/WorkspaceDetails'),
   loading: () => fallback,
 });
 const IdeIframeLoadable = loadable({
-  loader: () => import('./ide-iframe/IdeIframe'), 
+  loader: () => import('./ide-iframe/IdeIframe'),
   loading: () => fallback,
 });
 
 const items: Item[] = [
-  { to: '/', component: Dashboard, label: 'Dashboard', ico: 'chefont cheico-dashboard' },
-  { to: '/getstarted', component: SamplesListLoadable, label: 'Get Started', ico: 'fa fa-plus' },
+  { to: '/', component: GetStartedPageLoadable, label: 'Get Started Page', ico: 'fa fa-plus' },
   { to: '/workspaces', component: WorkspacesListLoadable, label: 'Workspaces', ico: 'chefont cheico-workspace' },
   { to: '/administration', component: AdministrationLoadable, label: 'Administration', ico: 'material-design icon-ic_settings_24px' },
   { to: '/workspace/:namespace/:workspaceName/', component: WorkspaceDetailsLoadable },
@@ -51,7 +49,7 @@ const LayoutComponent = (props: { history: any }): React.ReactElement => {
       {items.map((item: Item, index: number) => (
         <Route key={`app_route_${index + 1}`} path={item.to} exact component={item.component} />
       ))}
-      <Redirect path='*' to='/getstarted' />
+      <Redirect path='*' to='/' />
     </Layout>
   </Router>);
 };
