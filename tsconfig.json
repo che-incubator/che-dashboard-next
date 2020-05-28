@@ -10,19 +10,15 @@
     "removeComments": true,
     "sourceMap": true,
     "target": "es5",
-    "lib": [
-      "es2015",
-      "dom"
-    ],
+    "lib": ["es2015", "dom"],
     "skipLibCheck": true,
-    "types": ["reflect-metadata"],
-    "typeRoots": [
-      "node_modules/@types"
-    ],
+    "types": ["reflect-metadata", "jest"],
+    "typeRoots": ["node_modules/@types"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "strictPropertyInitialization": false,
     "moduleResolution": "node",
+    "allowJs": true
   },
   "files": [
     "./src/typings/che.d.ts"
