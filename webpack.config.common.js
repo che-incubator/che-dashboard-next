@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
  * Copyright (c) 2018-2020 Red Hat, Inc.
  * This program and the accompanying materials are made
  * available under the terms of the Eclipse Public License 2.0
@@ -8,7 +8,7 @@
  *
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
- *******************************************************************************/
+ */
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
@@ -65,15 +65,11 @@ module.exports = {
         test: /\.tsx?$/,
         enforce: 'pre',
         include: path.join(__dirname, 'src'),
-        use: [
-          {
-            options: {
-              eslintPath: require.resolve('eslint'),
-            },
-            loader: require.resolve('eslint-loader'),
-          }
-        ],
         exclude: /node_modules/,
+        loader: 'eslint-loader',
+        options: {
+          cache: true,
+        },
       },
       {
         test: /\.tsx?$/,
