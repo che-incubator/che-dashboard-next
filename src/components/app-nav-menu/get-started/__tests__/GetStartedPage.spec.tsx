@@ -10,14 +10,24 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import React from 'react';
 import { createHashHistory } from 'history';
+import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
-import { GetStartedPage } from '../GetStartedPage';
+import { Store } from 'redux';
+import createMockStore from 'redux-mock-store';
+import React from 'react';
+import thunk from 'redux-thunk';
+import { AppState } from '../../../../store';
+import GetStartedPage from '../GetStartedPage';
 
-jest.mock('../SamplesListTab', () => {
+jest.mock('../get-started-tab/SamplesListTab', () => {
   return function DummyTab(): React.ReactElement {
     return <span>Samples List Tab Content</span>;
+  };
+});
+jest.mock('../custom-workspace-tab/CustomWorkspaceTab', () => {
+  return function DummyTab(): React.ReactNode {
+    return <span>Custom Workspace Tab Content</span>;
   };
 });
 
@@ -26,17 +36,13 @@ describe('Get Started page', () => {
   let masthead: HTMLElement;
 
   beforeEach(() => {
+    const store = createFakeStore();
     const history = createHashHistory();
-    const branding = {
-      branding: {
-        branding: {
-          branding: {
-            name: 'test'
-          }
-        }
-      }
-    };
-    render(<GetStartedPage branding={branding} history={history} />);
+    render(
+      <Provider store={store}>
+        <GetStartedPage history={history} />
+      </Provider>
+    );
 
     masthead = screen.getByRole('heading');
   });
@@ -56,3 +62,21 @@ describe('Get Started page', () => {
   });
 
 });
+
+function createFakeStore(): Store {
+  const initialState: AppState = {
+    workspaces: {} as any,
+    branding: {
+      data: {
+        name: 'test'
+      },
+    } as any,
+    devfileMetadataFilter: {} as any,
+    devfileRegistries: {} as any,
+    user: {} as any,
+    infrastructureNamespace: {} as any,
+  };
+  const middleware = [thunk];
+  const mockStore = createMockStore(middleware);
+  return mockStore(initialState);
+}

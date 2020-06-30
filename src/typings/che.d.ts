@@ -48,7 +48,7 @@ declare namespace che {
   }
 
   export interface WorkspaceConfigAttributes {
-    persistVolumes?: 'false';
+    persistVolumes?: 'false' | 'true';
     editor?: string;
     plugins?: string;
   }
@@ -140,6 +140,15 @@ declare namespace che {
     icon: string;
     links: any;
     tags: Array<string>;
+  }
+
+  export interface KubernetesNamespace {
+    name: string;
+    attributes: {
+      default?: 'true' | 'false';
+      displayName?: string;
+      phase: string;
+    };
   }
 }
 

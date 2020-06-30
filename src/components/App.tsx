@@ -13,6 +13,7 @@
 import React, { Suspense } from 'react';
 import { Redirect, Route, Switch } from 'react-router';
 import { ConnectedRouter as Router } from 'connected-react-router';
+import { History } from 'history';
 import Layout from './app-nav-menu/Layout';
 
 import './app.styl';
@@ -33,14 +34,15 @@ const WorkspaceDetails = React.lazy(() => import('./workspace-details/WorkspaceD
 const IdeIframe = React.lazy(() => import('./ide-iframe/IdeIframe'));
 
 const items: RouteItem[] = [
-  { to: '/', component: GetStartedPage, label: 'Get Started Page', ico: 'fa fa-plus' },
+  { to: '/get-started', component: GetStartedPage, label: 'Get Started Page', ico: 'fa fa-plus' },
+  { to: '/', component: GetStartedPage },
   { to: '/workspaces', component: WorkspacesList, label: 'Workspaces', ico: 'chefont cheico-workspace' },
   { to: '/administration', component: Administration, label: 'Administration', ico: 'material-design icon-ic_settings_24px' },
   { to: '/workspace/:namespace/:workspaceName/', component: WorkspaceDetails },
   { to: '/ide/:namespace/:workspaceName/', component: IdeIframe },
 ];
 
-const LayoutComponent = (props: { history: any }): React.ReactElement => {
+const LayoutComponent = (props: { history: History }): React.ReactElement => {
   const navItems = items.map(item => ({ to: item.to, label: item.label, ico: item.ico }));
   const routes = items.map((item: RouteItem, index: number) => (
     <Route key={`app_route_${index + 1}`} path={item.to} exact component={item.component} />
@@ -49,12 +51,12 @@ const LayoutComponent = (props: { history: any }): React.ReactElement => {
   return (
     <Router history={props.history}>
       <Layout items={navItems}>
-        <Switch>
-          <Suspense fallback={fallback}>
+        <Suspense fallback={fallback}>
+          <Switch>
             {routes}
             <Redirect path='*' to='/' />
-          </Suspense>
-        </Switch>
+          </Switch>
+        </Suspense>
       </Layout>
     </Router>
   );

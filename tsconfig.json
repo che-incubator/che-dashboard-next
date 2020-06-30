@@ -12,7 +12,7 @@
     "target": "ES2018",
     "lib": ["ES2018", "dom"],
     "skipLibCheck": true,
-    "types": ["reflect-metadata", "jest"],
+    "types": ["reflect-metadata", "jest", "@testing-library/jest-dom"],
     "typeRoots": ["node_modules/@types", "./src/typings"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
@@ -25,6 +25,7 @@
     "./src/typings/che.d.ts"
   ],
   "include": [
-    "./src/**/*.tsx"
+    "./src/**/*.tsx",
+    "./src/**/*.ts"
   ]
 }

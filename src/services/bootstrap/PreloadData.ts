@@ -12,12 +12,12 @@
 
 import { container } from '../../inversify.config';
 import { KeycloakSetup } from './KeycloakSetup';
-import { CheBranding } from './CheBranding';
 import * as BrandingStore from '../../store/Branding';
 import * as UserStore from '../../store/User';
 import * as WorkspacesStore from '../../store/Workspaces';
 import * as DevfileRegistriesStore from '../../store/DevfileRegistries';
 import * as DevfileMetadataFiltersStore from '../../store/DevfileFilters';
+import * as InfrastructureNamespaceStore from '../../store/InfrastructureNamespace';
 import { Keycloak } from '../keycloak/Keycloak';
 import { Store } from 'redux';
 
@@ -26,25 +26,23 @@ import { Store } from 'redux';
  * @author Oleksii Orel
  */
 export class PreloadData {
-  private cheBranding: CheBranding;
   private keycloakSetup: KeycloakSetup;
   private keycloak: Keycloak;
   private store: Store;
 
   constructor(store: Store) {
     this.store = store;
-    this.cheBranding = container.get(CheBranding);
     this.keycloakSetup = container.get(KeycloakSetup);
     this.keycloak = container.get(Keycloak);
   }
 
   async init(): Promise<void> {
-    this.setBranding();// default values for a loader
-    this.updateBranding();
+    await this.updateBranding();
     await this.updateUser();
     await this.updateKeycloakUserInfo();
 
     this.updateWorkspaces();
+    this.updateInfrastructureNamespaces();
 
     const settings = await this.updateWorkspaceSettings();
     await this.updateRegistriesMetadata(settings);
@@ -53,15 +51,9 @@ export class PreloadData {
     this.updateDevfileSchema();
   }
 
-  private setBranding(): void {
-    const branding = this.cheBranding.all;
-    this.store.dispatch(BrandingStore.setBranding({ branding }));
-  }
-
-  private updateBranding(): void {
-    this.cheBranding.ready.then(() => {
-      this.setBranding();
-    });
+  private async updateBranding(): Promise<void> {
+    const { requestBranding } = BrandingStore.actionCreators;
+    await requestBranding()(this.store.dispatch, this.store.getState);
   }
 
   private setUser(): void {
@@ -77,6 +69,11 @@ export class PreloadData {
   private async updateWorkspaces(): Promise<void> {
     const { requestWorkspaces } = WorkspacesStore.actionCreators;
     await requestWorkspaces()(this.store.dispatch, this.store.getState);
+  }
+
+  private async updateInfrastructureNamespaces(): Promise<void> {
+    const { requestNamespaces } = InfrastructureNamespaceStore.actionCreators;
+    await requestNamespaces()(this.store.dispatch, this.store.getState);
   }
 
   private async updateWorkspaceSettings(): Promise<che.WorkspaceSettings> {

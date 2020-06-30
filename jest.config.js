@@ -30,4 +30,5 @@ module.exports = {
     }
   },
   maxWorkers: 4,
+  setupFilesAfterEnv: ['./jest.setup.ts'],
 }

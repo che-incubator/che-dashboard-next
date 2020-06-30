@@ -15,7 +15,6 @@ import ReconnectingWebSocket from 'reconnecting-websocket';
 import { getDefer } from '../deferred';
 import { injectable } from 'inversify';
 
-
 /**
  * JSON RPC through websocket.
  */
@@ -23,7 +22,6 @@ import { injectable } from 'inversify';
 export class WebsocketClient implements CommunicationClient {
   private websocketStream: ReconnectingWebSocket;
   private handlers: { [event: string]: Function[] } = {};
-
 
   /**
    * Performs connection to the pointed entrypoint.
