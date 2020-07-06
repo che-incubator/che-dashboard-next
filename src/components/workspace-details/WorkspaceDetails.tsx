@@ -13,6 +13,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router';
+import { History } from 'history';
 import {
   PageSection,
   PageSectionVariants,
@@ -35,15 +36,21 @@ import './workspace-details.styl';
 
 const SECTION_THEME = PageSectionVariants.light;
 
-type WorkspaceDetailsProps =
+type Props =
   WorkspacesStore.WorkspacesState // ... state we've requested from the Redux store
   & WorkspacesStore.ActionCreators // ... plus action creators we've requested
-  & { history: any } // ... plus history
+  & { history: History } // ... plus history
   & RouteComponentProps<{ namespace: string; workspaceName: string }>; // incoming parameters
 
-type WorkspaceDetailsState = { activeTabKey: number; workspace: che.Workspace; alertVisible: boolean; isDevfileValid: boolean; hasRequestErrors: boolean };
+type State = {
+  activeTabKey: number;
+  workspace: che.Workspace;
+  alertVisible: boolean;
+  isDevfileValid: boolean;
+  hasRequestErrors: boolean;
+};
 
-class WorkspaceDetails extends React.PureComponent<WorkspaceDetailsProps, WorkspaceDetailsState> {
+class WorkspaceDetails extends React.PureComponent<Props, State> {
   private timeoutId: any;
   private alert: { variant?: 'success' | 'danger'; title?: string } = {};
   private showAlert: (variant: 'success' | 'danger', title: string, timeDelay?: number) => void;
@@ -53,13 +60,11 @@ class WorkspaceDetails extends React.PureComponent<WorkspaceDetailsProps, Worksp
 
   private devfileEditorRef: React.RefObject<Editor>;
 
-  constructor(props: WorkspaceDetailsProps) {
+  constructor(props: Props) {
     super(props);
 
     const { namespace, workspaceName } = this.props.match.params;
-    const workspace = this.props.workspaces.find(workspace => {
-      return workspace.namespace === namespace && workspace.devfile.metadata.name === workspaceName;
-    });
+    const workspace = this.props.getByQualifiedName(namespace, workspaceName);
     if (!workspace) {
       this.props.history.push('/');
       return;
@@ -97,6 +102,18 @@ class WorkspaceDetails extends React.PureComponent<WorkspaceDetailsProps, Worksp
     this.devfileEditorRef = React.createRef<Editor>();
   }
 
+  public componentDidUpdate(): void {
+    const workspaceNext = this.props.getById(this.state.workspace.id);
+
+    const statusChanged = this.state.workspace.status !== workspaceNext.status;
+    const devfileChanged = this.isEqualObject(this.state.workspace.devfile, workspaceNext.devfile) === false;
+    if (statusChanged || devfileChanged) {
+      this.setState({
+        workspace: Object.assign({}, workspaceNext),
+      });
+    }
+  }
+
   private updateEditor(devfile: che.WorkspaceDevfile): void {
     this.devfileEditorRef.current?.updateContent(devfile);
   }
@@ -120,7 +137,8 @@ class WorkspaceDetails extends React.PureComponent<WorkspaceDetailsProps, Worksp
           <TextContent>
             <Text component='h1'>
               Workspaces&nbsp;<b>&nbsp;&gt;&nbsp;</b>&nbsp;{workspaceName}&nbsp;
-                            <WorkspaceIndicator status={workspace.status} /><span>{workspace.status}</span>
+              <WorkspaceIndicator status={workspace.status} />
+              <span>{workspace.status}</span>
             </Text>
           </TextContent>
         </PageSection>
@@ -191,13 +209,8 @@ class WorkspaceDetails extends React.PureComponent<WorkspaceDetailsProps, Worksp
   }
 
   // TODO rework this temporary solution
-  private sortObject(o: che.WorkspaceDevfile): che.WorkspaceDevfile {
-    return Object.keys(o).sort().reduce((r, k) => (r[k] = o[k], r), {} as che.WorkspaceDevfile);
-  }
-
-  // TODO rework this temporary solution
   private isEqualObject(a: che.WorkspaceDevfile, b: che.WorkspaceDevfile): boolean {
-    return JSON.stringify(this.sortObject(a)) == JSON.stringify(this.sortObject(b));
+    return JSON.stringify(a, Object.keys(a).sort()) == JSON.stringify(b, Object.keys(b).sort());
   }
 }
 
