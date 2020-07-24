@@ -10,12 +10,10 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-module.exports = {
-  '*.{js,ts,tsx}': [
-    'eslint --fix',
-    'yarn format',
-  ],
-  '*.css': [
-    'stylelint --fix',
-  ]
-};
+.mainItem {
+  align-items: center;
+}
+
+.mainItemIcon {
+  margin-right: 10px;
+}

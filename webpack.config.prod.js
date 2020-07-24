@@ -11,6 +11,7 @@
  */
 
 const CopyPlugin = require('copy-webpack-plugin');
+const StylelintPlugin = require('stylelint-webpack-plugin');
 const merge = require('webpack-merge');
 const path = require('path');
 const webpack = require('webpack');
@@ -19,12 +20,35 @@ const common = require('./webpack.config.common.js');
 
 module.exports = merge(common, {
   mode: 'production',
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              modules: {
+                auto: true,
+                localIdentName: '[hash:base64]',
+              },
+            },
+          },
+        ],
+      },
+    ],
+  },
   plugins: [
     new webpack.ProgressPlugin(),
     new CopyPlugin({
       patterns: [
-        {from: path.join(__dirname, 'assets'), to: 'assets'},
+        { from: path.join(__dirname, 'assets'), to: 'assets' },
       ]
+    }),
+    new StylelintPlugin({
+      files: '**/*.css',
+      fix: true,
     }),
   ],
   output: {
