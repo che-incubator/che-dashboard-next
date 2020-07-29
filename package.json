@@ -3,6 +3,7 @@
   "version": "5.0.0",
   "description": "Dashboard for Eclipse CHE",
   "private": true,
+  "workspaces": ["e2e"],
   "repository": {
     "type": "git",
     "url": "https://github.com/che-incubator/che-dashboard-next.git"
@@ -29,7 +30,8 @@
     "serve:prod": "webpack-dev-server --color --disable-host-check --config webpack.config.prod-dev.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "bump-deps": "node .deps/bump-deps.js"
+    "prepare:licenseCheck": "license-tool/build.sh",
+    "licenseCheck": "license-tool/run.sh"
   },
   "dependencies": {
     "@patternfly/patternfly": "^4.10.31",
