@@ -11,6 +11,8 @@
  */
 
 import * as Workspaces from './Workspaces';
+import * as Plugins from './Plugins';
+import * as FactoryResolver from './FactoryResolver';
 import * as DevfileRegistries from './DevfileRegistries';
 import * as DevfileMetadataFilter from './DevfileFilters';
 import * as InfrastructureNamespace from './InfrastructureNamespace';
@@ -25,6 +27,8 @@ export interface AppState {
   infrastructureNamespace: InfrastructureNamespace.State;
   user: any;
   workspaces: Workspaces.WorkspacesState;
+  plugins: Plugins.State;
+  factoryResolver: FactoryResolver.State;
 }
 
 export const reducers = {
@@ -34,6 +38,8 @@ export const reducers = {
   branding: Branding.reducer,
   user: userReducer,
   infrastructureNamespace: InfrastructureNamespace.reducer,
+  plugins: Plugins.reducer,
+  factoryResolver: FactoryResolver.reducer,
 };
 
 // this type can be used as a hint on action creators so that its 'dispatch' and 'getState' params are

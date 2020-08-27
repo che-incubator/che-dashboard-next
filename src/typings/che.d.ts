@@ -36,6 +36,21 @@ declare namespace che {
     supportedRecipeTypes: string;
   }
 
+  export interface Plugin {
+    id: string;
+    name: string;
+    publisher: string;
+    deprecate?: {
+      automigrate: boolean;
+      migrateTo: string;
+    };
+    displayName: string;
+    type: string;
+    version?: string;
+    description?: string;
+    isEnabled?: boolean;
+  }
+
   export interface WorkspaceAttributes {
     created: number;
     updated?: number;
@@ -49,6 +64,7 @@ declare namespace che {
 
   export interface WorkspaceConfigAttributes {
     persistVolumes?: 'false' | 'true';
+    asyncPersist?: 'false' | 'true';
     editor?: string;
     plugins?: string;
   }

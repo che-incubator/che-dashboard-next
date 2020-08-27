@@ -116,6 +116,7 @@ class WorkspaceDetails extends React.PureComponent<Props, State> {
 
   private updateEditor(devfile: che.WorkspaceDevfile): void {
     this.devfileEditorRef.current?.updateContent(devfile);
+    this.setState({ isDevfileValid: true });
   }
 
   public render(): React.ReactElement {
@@ -143,7 +144,7 @@ class WorkspaceDetails extends React.PureComponent<Props, State> {
           </TextContent>
         </PageSection>
         <PageSection variant={SECTION_THEME} className='workspace-details-tabs'>
-          <Tabs isFilled activeKey={this.state.activeTabKey} onSelect={this.handleTabClick}>
+          <Tabs activeKey={this.state.activeTabKey} onSelect={this.handleTabClick}>
             <Tab eventKey={0} title='Overview'>
               <br /><p>Tab 1 section</p>
             </Tab>
@@ -159,7 +160,7 @@ class WorkspaceDetails extends React.PureComponent<Props, State> {
             <Tab eventKey={4} title='Devfile'>
               <CheProgress isLoading={this.props.isLoading} /><br />
               <TextContent className='workspace-details-editor'>
-                <Text component='h3' className='label'>Workspace</Text>
+                <Text component='h3' className='label'></Text>
                 <DevfileEditor
                   ref={this.devfileEditorRef}
                   devfile={workspace.devfile}
@@ -209,8 +210,13 @@ class WorkspaceDetails extends React.PureComponent<Props, State> {
   }
 
   // TODO rework this temporary solution
+  private sortObject(o: che.WorkspaceDevfile): che.WorkspaceDevfile {
+    return Object.keys(o).sort().reduce((r, k) => (r[k] = o[k], r), {} as che.WorkspaceDevfile);
+  }
+
+  // TODO rework this temporary solution
   private isEqualObject(a: che.WorkspaceDevfile, b: che.WorkspaceDevfile): boolean {
-    return JSON.stringify(a, Object.keys(a).sort()) == JSON.stringify(b, Object.keys(b).sort());
+    return JSON.stringify(this.sortObject(a)) == JSON.stringify(this.sortObject(b));
   }
 }
 

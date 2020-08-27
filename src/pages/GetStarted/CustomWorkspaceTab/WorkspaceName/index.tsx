@@ -14,6 +14,8 @@ import React from 'react';
 import { FormGroup, TextInput, ValidatedOptions } from '@patternfly/react-core';
 import { ExclamationCircleIcon } from '@patternfly/react-icons';
 
+import styles from './index.module.css';
+
 const MIN_LENGTH = 3;
 const MAX_LENGTH = 100;
 const PATTERN = `^(?:[a-zA-Z0-9][-_.a-zA-Z0-9]{1,${MAX_LENGTH - 2}}[a-zA-Z0-9])?$`;
@@ -130,6 +132,7 @@ export class WorkspaceNameFormGroup extends React.PureComponent<Props, State> {
         validated={validated}
       >
         <TextInput
+          className={styles.workspaceName}
           value={name}
           isRequired
           type="text"

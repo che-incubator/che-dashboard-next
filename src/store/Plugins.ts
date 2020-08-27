@@ -12,47 +12,47 @@
 
 import { Action, Reducer } from 'redux';
 import { AppThunkAction, AppState } from './';
-import { fetchKubernetesNamespace } from '../services/api/kubernetes-namespace';
+import { fetchPlugins } from '../services/registry/plugins';
 
 export interface State {
   isLoading: boolean;
-  namespaces: che.KubernetesNamespace[];
+  plugins: che.Plugin[];
 }
 
-interface RequestNamespacesAction {
-  type: 'REQUEST_NAMESPACES';
+interface RequestPluginsAction {
+  type: 'REQUEST_PLUGINS';
 }
 
-interface ReceiveNamespacesAction {
-  type: 'RECEIVE_NAMESPACES';
-  namespaces: che.KubernetesNamespace[];
+interface ReceivePluginsAction {
+  type: 'RECEIVE_PLUGINS';
+  plugins: che.Plugin[];
 }
 
-type KnownAction = RequestNamespacesAction
-  | ReceiveNamespacesAction;
+type KnownAction = RequestPluginsAction
+  | ReceivePluginsAction;
 
 // todo proper type instead of 'any'
 export type ActionCreators = {
-  requestNamespaces: () => any;
+  requestPlugins: (registryUrl: string) => any;
 };
 
 export const actionCreators: ActionCreators = {
 
-  requestNamespaces: (): AppThunkAction<KnownAction> => async (dispatch, getState): Promise<Array<che.KubernetesNamespace>> => {
+  requestPlugins: (registryUrl: string): AppThunkAction<KnownAction> => async (dispatch, getState): Promise<che.Plugin[]> => {
     const appState: AppState = getState();
     if (!appState || !appState.infrastructureNamespace) {
       // todo throw a nice error
       throw Error('something unexpected happened');
     }
 
-    dispatch({ type: 'REQUEST_NAMESPACES' });
+    dispatch({ type: 'REQUEST_PLUGINS' });
 
     try {
-      const namespaces = await fetchKubernetesNamespace();
-      dispatch({ type: 'RECEIVE_NAMESPACES', namespaces });
-      return namespaces;
+      const plugins = await fetchPlugins(registryUrl);
+      dispatch({ type: 'RECEIVE_PLUGINS', plugins });
+      return plugins;
     } catch (e) {
-      throw new Error('Failed to request list of available kubernetes namespaces, \n' + e);
+      throw new Error('Failed to request plugins, \n' + e);
     }
   },
 
@@ -60,7 +60,7 @@ export const actionCreators: ActionCreators = {
 
 const unloadedState: State = {
   isLoading: false,
-  namespaces: [],
+  plugins: [],
 };
 
 export const reducer: Reducer<State> = (state: State | undefined, incomingAction: Action): State => {
@@ -70,13 +70,13 @@ export const reducer: Reducer<State> = (state: State | undefined, incomingAction
 
   const action = incomingAction as KnownAction;
   switch (action.type) {
-    case 'REQUEST_NAMESPACES':
+    case 'REQUEST_PLUGINS':
       return Object.assign({}, state, {
         isLoading: true,
       });
-    case 'RECEIVE_NAMESPACES':
+    case 'RECEIVE_PLUGINS':
       return Object.assign({}, state, {
-        namespaces: action.namespaces,
+        plugins: action.plugins,
       });
     default:
       return state;

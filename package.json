@@ -49,8 +49,8 @@
     "jquery": "^3.4.1",
     "js-yaml": "^3.13.1",
     "monaco-editor-core": "^0.20.0",
-    "monaco-languageclient": "^0.12.0",
-    "monaco-languages": "^1.8.0",
+    "monaco-languageclient": "^0.13.0",
+    "monaco-languages": "^1.10.0",
     "qs": "^6.9.4",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
@@ -68,6 +68,7 @@
     "yaml-language-server": "^0.7.2"
   },
   "devDependencies": {
+    "@eclipse-che/api": "^7.5.0-SNAPSHOT",
     "@testing-library/dom": "^7.16.2",
     "@testing-library/jest-dom": "^5.10.1",
     "@testing-library/react": "^10.3.0",
@@ -130,8 +131,5 @@
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.11.0",
     "webpack-merge": "^4.2.2"
-  },
-  "resolutions": {
-    "tslib": "1.9.0"
   }
 }

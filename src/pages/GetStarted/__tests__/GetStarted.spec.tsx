@@ -65,6 +65,14 @@ describe('Get Started page', () => {
 
 function createFakeStore(): Store {
   const initialState: AppState = {
+    factoryResolver: {
+      isLoading: false,
+      resolver: {},
+    },
+    plugins: {
+      isLoading: false,
+      plugins: [],
+    },
     workspaces: {} as any,
     branding: {
       data: {
