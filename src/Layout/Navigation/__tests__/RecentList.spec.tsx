@@ -138,6 +138,11 @@ function createFakeStore(workspaces: che.Workspace[]): Store {
       isLoading: false,
       settings: {} as any,
       workspaces,
+
+      namespace: '',
+      workspaceName: '',
+      workspaceId: '',
+      recentNumber: 5,
     },
     branding: {} as any,
     devfileMetadataFilter: {} as any,
