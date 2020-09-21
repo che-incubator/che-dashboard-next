@@ -11,9 +11,10 @@
  */
 
 import { Action, Reducer } from 'redux';
-import { AppThunkAction, AppState } from '.';
-import { fetchRegistriesMetadata, fetchDevfile } from '../services/registry/devfiles';
-import { fetchDevfileSchema } from '../services/api/devfile';
+import { AppThunk } from '..';
+import { fetchRegistriesMetadata, fetchDevfile } from '../../services/registry/devfiles';
+import { fetchDevfileSchema } from '../../services/api/devfile';
+import { createState } from '../helpers';
 
 // This state defines the type of data maintained in the Redux store.
 export interface State {
@@ -26,6 +27,9 @@ export interface State {
       error: string;
     };
   };
+
+  // current filter value
+  filter: string;
 }
 
 interface RequestMetadataAction {
@@ -56,36 +60,40 @@ interface ReceiveSchemaAction {
   schema: any;
 }
 
+interface SetFilterValue extends Action {
+  type: 'SET_FILTER',
+  value: string;
+}
+
+interface ClearFilterValue extends Action {
+  type: 'CLEAR_FILTER',
+}
+
 type KnownAction = RequestMetadataAction
   | ReceiveMetadataAction
   | RequestDevfileAction
   | ReceiveDevfileAction
   | RequestSchemaAction
-  | ReceiveSchemaAction;
+  | ReceiveSchemaAction
+  | SetFilterValue
+  | ClearFilterValue;
 
-// todo proper type instead of 'any'
 export type ActionCreators = {
-  requestRegistriesMetadata: (location: string) => any;
-  requestDevfile: (Location: string) => any;
-  requestJsonSchema: () => any;
+  requestRegistriesMetadata: (location: string) => AppThunk<KnownAction, Promise<che.DevfileMetaData[]>>;
+  requestDevfile: (Location: string) => AppThunk<KnownAction, Promise<string>>;
+  requestJsonSchema: () => AppThunk<KnownAction, any>;
+
+  setFilter: (value: string) => AppThunk<SetFilterValue, void>;
+  clearFilter: () => AppThunk<ClearFilterValue, void>;
 };
 
-// ACTION CREATORS - These are functions exposed to UI components that will trigger a state transition.
-// They don't directly mutate state, but they can have external side-effects (such as loading data).
 export const actionCreators: ActionCreators = {
 
   /**
    * Request devfile metadata from available registries. `registryUrls` is space-separated list of urls.
    */
-  requestRegistriesMetadata: (registryUrls: string): AppThunkAction<KnownAction> => async (dispatch, getState): Promise<che.DevfileMetaData[]> => {
-    const appState: AppState = getState();
-    if (!appState || !appState.devfileRegistries) {
-      // todo throw a nice error
-      throw Error('something unexpected happened.');
-    }
-
+  requestRegistriesMetadata: (registryUrls: string): AppThunk<KnownAction, Promise<che.DevfileMetaData[]>> => async (dispatch): Promise<che.DevfileMetaData[]> => {
     dispatch({ type: 'REQUEST_METADATA' });
-
     try {
       const metadata = await fetchRegistriesMetadata(registryUrls);
       dispatch({ type: 'RECEIVE_METADATA', metadata });
@@ -95,15 +103,8 @@ export const actionCreators: ActionCreators = {
     }
   },
 
-  requestDevfile: (url: string): AppThunkAction<KnownAction> => async (dispatch, getState): Promise<string> => {
-    const appState: AppState = getState();
-    if (!appState || !appState.devfileRegistries) {
-      // todo throw a nice error
-      throw Error('something unexpected happened.');
-    }
-
+  requestDevfile: (url: string): AppThunk<KnownAction, Promise<string>> => async (dispatch): Promise<string> => {
     dispatch({ type: 'REQUEST_DEVFILE' });
-
     try {
       const devfile = await fetchDevfile(url);
       dispatch({ type: 'RECEIVE_DEVFILE', devfile, url });
@@ -113,15 +114,8 @@ export const actionCreators: ActionCreators = {
     }
   },
 
-  requestJsonSchema: (): AppThunkAction<KnownAction> => async (dispatch, getState): Promise<any> => {
-    const appState: AppState = getState();
-    if (!appState || !appState.devfileRegistries) {
-      // todo throw a nice error
-      throw Error('something unexpected happened.');
-    }
-
+  requestJsonSchema: (): AppThunk<KnownAction, any> => async (dispatch): Promise<any> => {
     dispatch({ type: 'REQUEST_SCHEMA' });
-
     try {
       const schema = await fetchDevfileSchema();
       dispatch({ type: 'RECEIVE_SCHEMA', schema });
@@ -131,6 +125,14 @@ export const actionCreators: ActionCreators = {
     }
   },
 
+  setFilter: (value: string): AppThunk<SetFilterValue, void> => dispatch => {
+    dispatch({ type: 'SET_FILTER', value });
+  },
+
+  clearFilter: (): AppThunk<ClearFilterValue, void> => dispatch => {
+    dispatch({ type: 'CLEAR_FILTER' });
+  }
+
 };
 
 const unloadedState: State = {
@@ -138,6 +140,8 @@ const unloadedState: State = {
   metadata: [],
   devfiles: {},
   schema: undefined,
+
+  filter: '',
 };
 
 export const reducer: Reducer<State> = (state: State | undefined, incomingAction: Action): State => {
@@ -150,15 +154,17 @@ export const reducer: Reducer<State> = (state: State | undefined, incomingAction
     case 'REQUEST_METADATA':
     case 'REQUEST_SCHEMA':
     case 'REQUEST_DEVFILE':
-      return Object.assign({}, state, {
+      return createState(state, {
         isLoading: true,
       });
     case 'RECEIVE_METADATA':
-      return Object.assign({}, state, {
+      return createState(state, {
+        isLoading: false,
         metadata: action.metadata,
       });
     case 'RECEIVE_DEVFILE':
-      return Object.assign({}, state, {
+      return createState(state, {
+        isLoading: false,
         devfiles: {
           [action.url]: {
             content: action.devfile,
@@ -166,9 +172,20 @@ export const reducer: Reducer<State> = (state: State | undefined, incomingAction
         }
       });
     case 'RECEIVE_SCHEMA':
-      return Object.assign({}, state, {
-        schema: action.schema
+      return createState(state, {
+        isLoading: false,
+        schema: action.schema,
       });
+    case 'SET_FILTER': {
+      return createState(state, {
+        filter: action.value,
+      });
+    }
+    case 'CLEAR_FILTER': {
+      return createState(state, {
+        filter: '',
+      });
+    }
     default:
       return state;
   }
