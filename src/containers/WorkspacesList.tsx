@@ -21,24 +21,17 @@ import {
   selectIsLoading,
   selectAllWorkspaces,
 } from '../store/Workspaces/selectors';
-import WorkspaceDetailsPage from '../pages/WorkspaceDetails';
+import WorkspacesListPage from '../pages/WorkspacesList';
 
 type Props =
   MappedProps
   & { history: History }
   & RouteComponentProps<{ namespace: string; workspaceName: string }>; // incoming parameters
 
-export class WorkspaceDetails extends React.PureComponent<Props> {
+export class WorkspacesList extends React.PureComponent<Props> {
 
   constructor(props: Props) {
     super(props);
-
-    const { namespace, workspaceName } = this.props.match.params;
-    const workspace = this.props.allWorkspaces?.find(workspace =>
-      workspace.namespace === namespace && workspace.devfile.metadata.name === workspaceName);
-    if (workspace) {
-      this.props.setWorkspaceId(workspace.id);
-    }
   }
 
   componentDidMount() {
@@ -50,7 +43,7 @@ export class WorkspaceDetails extends React.PureComponent<Props> {
 
   render() {
     return (
-      <WorkspaceDetailsPage
+      <WorkspacesListPage
         history={this.props.history}
       />
     );
@@ -69,4 +62,4 @@ const connector = connect(
 );
 
 type MappedProps = ConnectedProps<typeof connector>;
-export default connector(WorkspaceDetails);
+export default connector(WorkspacesList);
