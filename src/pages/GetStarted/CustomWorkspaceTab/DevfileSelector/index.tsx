@@ -42,19 +42,21 @@ type Props =
     onClear?: () => void;
   };
 type State = {
+  isLoading: boolean;
   alerts: AlertItem[];
   metadata: che.DevfileMetaData[];
 };
 
 export class DevfileSelectorFormGroup extends React.PureComponent<Props, State> {
-
-  private devfileSelectRef: React.RefObject<DevfileSelect>;
-  private devfileLocationRef: React.RefObject<DevfileLocationInput>;
+  private factoryResolver: FactoryResolverStore.State;
+  private readonly devfileSelectRef: React.RefObject<DevfileSelect>;
+  private readonly devfileLocationRef: React.RefObject<DevfileLocationInput>;
 
   constructor(props: Props) {
     super(props);
 
     this.state = {
+      isLoading: false,
       alerts: [],
       metadata: this.props.devfileRegistries.metadata,
     };
@@ -69,6 +71,10 @@ export class DevfileSelectorFormGroup extends React.PureComponent<Props, State> 
     }
   }
 
+  public componentDidUpdate(): void {
+    this.factoryResolver = this.props.factoryResolver;
+  }
+
   private async handleDevfileSelect(meta: che.DevfileMetaData): Promise<void> {
     // clear location input
     this.devfileLocationRef.current?.clearInput();
@@ -77,13 +83,10 @@ export class DevfileSelectorFormGroup extends React.PureComponent<Props, State> 
       const devfile = safeLoad(devfileContent);
       this.props.onDevfile(devfile);
     } catch (e) {
-      let errorMessage = 'Failed to load devfile.';
-      console.warn(errorMessage, e);
-      errorMessage += ` ${e}`;
       this.showAlert({
         key: 'load-devfile-failed',
-        title: errorMessage,
-        variant: AlertVariant.warning,
+        title: `Failed to load devfile. ${e}`,
+        variant: AlertVariant.danger,
       });
       throw new Error(e);
     }
@@ -93,17 +96,21 @@ export class DevfileSelectorFormGroup extends React.PureComponent<Props, State> 
     // clear devfile select
     this.devfileSelectRef.current?.clearSelect();
     try {
-      const devfileContent = await this.props.requestFactoryResolver(location) as che.WorkspaceDevfile;
-      this.props.onDevfile(devfileContent);
+      this.setState({ isLoading: true });
+      await this.props.requestFactoryResolver(location);
+      const { resolver } = this.factoryResolver;
+      if (resolver.source === 'repo') {
+        throw new Error('devfile.yaml not found in the specified GitHub repository root.');
+      }
+      this.props.onDevfile(resolver.devfile as che.WorkspaceDevfile);
+      this.setState({ isLoading: false });
     } catch (e) {
+      this.setState({ isLoading: false });
       this.devfileLocationRef.current?.invalidateInput();
-      let errorMessage = 'Failed to resolve or load the devfile.';
-      console.warn(errorMessage, e);
-      errorMessage += ` ${e}`;
       this.showAlert({
         key: 'load-factory-resolver-failed',
-        title: errorMessage,
-        variant: AlertVariant.warning,
+        title: `Failed to resolve or load the devfile. ${e}`,
+        variant: AlertVariant.danger,
       });
       throw new Error(e);
     }
@@ -119,7 +126,7 @@ export class DevfileSelectorFormGroup extends React.PureComponent<Props, State> 
   }
 
   public render(): React.ReactNode {
-    const { alerts, metadata } = this.state;
+    const { alerts, metadata, isLoading } = this.state;
 
     return (
       <React.Fragment>
@@ -143,7 +150,7 @@ export class DevfileSelectorFormGroup extends React.PureComponent<Props, State> 
               Select a devfile from a templates or enter devfile URL
             </Text>
           </TextContent>
-          <Flex direction={{ default: 'column', lg: 'row' }} >
+          <Flex direction={{ default: 'column', lg: 'row' }}>
             <Flex
               direction={{ default: 'row' }}
             >
@@ -160,6 +167,7 @@ export class DevfileSelectorFormGroup extends React.PureComponent<Props, State> 
             <FlexItem grow={{ default: 'grow' }}>
               <DevfileLocationInput
                 ref={this.devfileLocationRef}
+                isLoading={isLoading}
                 onChange={location => this.onLocationChanged(location)}
               />
             </FlexItem>
@@ -181,7 +189,7 @@ const connector = connect(
   {
     ...DevfileRegistriesStore.actionCreators,
     ...FactoryResolverStore.actionCreators,
-  }
+  },
 );
 
 type MappedProps = ConnectedProps<typeof connector>;

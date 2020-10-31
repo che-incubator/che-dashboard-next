@@ -14,12 +14,9 @@ import { Action, Reducer } from 'redux';
 import * as api from '@eclipse-che/api';
 import { ThunkDispatch } from 'redux-thunk';
 import { AppThunk } from '../';
-import {
-  createWorkspaceFromDevfile,
-} from '../../services/api/workspace';
 import { container } from '../../inversify.config';
 import { CheWorkspaceClient } from '../../services/workspace-client/CheWorkspaceClient';
-import { WorkspaceStatus } from '../../services/api/workspaceStatus';
+import { WorkspaceStatus } from '../../services/workspaceStatus';
 import { createState } from '../helpers';
 
 const WorkspaceClient = container.get(CheWorkspaceClient);
@@ -29,12 +26,12 @@ export interface State {
   isLoading: boolean;
   settings: che.WorkspaceSettings;
   workspaces: che.Workspace[];
-
+  // runtime logs
+  workspacesLogs: Map<string, string[]>;
   // current workspace qualified name
   namespace: string;
   workspaceName: string;
   workspaceId: string;
-
   // number of recent workspaces
   recentNumber: number;
 }
@@ -61,6 +58,16 @@ interface UpdateWorkspaceStatusAction extends Action {
   type: 'UPDATE_WORKSPACE_STATUS';
   workspaceId: string;
   status: string;
+}
+
+interface UpdateWorkspacesLogsAction extends Action {
+  type: 'UPDATE_WORKSPACES_LOGS';
+  workspacesLogs: Map<string, string[]>;
+}
+
+interface DeleteWorkspaceLogsAction {
+  type: 'DELETE_WORKSPACE_LOGS';
+  workspaceId: string;
 }
 
 interface DeleteWorkspaceAction {
@@ -109,7 +116,9 @@ type KnownAction =
   | ClearWorkspaceQualifiedName
   | SetWorkspaceId
   | ClearWorkspaceId
-  | UpdateWorkspaceStatusAction;
+  | UpdateWorkspaceStatusAction
+  | UpdateWorkspacesLogsAction
+  | DeleteWorkspaceLogsAction;
 
 export type ActionCreators = {
   requestWorkspaces: () => AppThunk<KnownAction, Promise<void>>;
@@ -118,8 +127,8 @@ export type ActionCreators = {
   deleteWorkspace: (workspaceId: string) => AppThunk<KnownAction, Promise<void>>;
   updateWorkspace: (workspace: che.Workspace) => AppThunk<KnownAction, Promise<void>>;
   createWorkspaceFromDevfile: (
-    devfile: che.WorkspaceDevfile,
-    cheNamespace: string | undefined,
+    devfile: api.che.workspace.devfile.Devfile,
+    namespace: string | undefined,
     infrastructureNamespace: string | undefined,
     attributes: { [key: string]: string } | {},
   ) => AppThunk<KnownAction, Promise<che.Workspace>>;
@@ -131,11 +140,13 @@ export type ActionCreators = {
   clearWorkspaceId: () => AppThunk<ClearWorkspaceId>;
 };
 
-type MessageHandler = (message: any) => void;
-const subscribedWorkspaceStatusCallbacks = new Map<string, MessageHandler>();
+type WorkspaceStatusMessageHandler = (message: api.che.workspace.event.WorkspaceStatusEvent) => void;
+type EnvironmentOutputMessageHandler = (message: api.che.workspace.event.RuntimeLogEvent) => void;
+const subscribedWorkspaceStatusCallbacks = new Map<string, WorkspaceStatusMessageHandler>();
+const subscribedEnvironmentOutputCallbacks = new Map<string, EnvironmentOutputMessageHandler>();
 
-function subscribeToStatusChange(workspaceId: string, dispatch: ThunkDispatch<State, undefined, UpdateWorkspaceStatusAction>): void {
-  const callback = (message: any) => {
+function subscribeToStatusChange(workspaceId: string, dispatch: ThunkDispatch<State, undefined, UpdateWorkspaceStatusAction | DeleteWorkspaceLogsAction>): void {
+  const callback = message => {
     const status = message.error ? 'ERROR' : message.status;
     if (WorkspaceStatus[status]) {
       dispatch({
@@ -144,10 +155,20 @@ function subscribeToStatusChange(workspaceId: string, dispatch: ThunkDispatch<St
         status,
       });
     }
+    if (WorkspaceStatus[WorkspaceStatus.STARTING] !== status) {
+      unSubscribeToEnvironmentOutput(workspaceId);
+    }
+    if (WorkspaceStatus[WorkspaceStatus.STOPPED] === status) {
+      dispatch({
+        type: 'DELETE_WORKSPACE_LOGS',
+        workspaceId,
+      });
+    }
   };
   WorkspaceClient.jsonRpcMasterApi.subscribeWorkspaceStatus(workspaceId, callback);
   subscribedWorkspaceStatusCallbacks.set(workspaceId, callback);
 }
+
 function unSubscribeToStatusChange(workspaceId: string): void {
   const callback = subscribedWorkspaceStatusCallbacks.get(workspaceId);
   if (!callback) {
@@ -155,6 +176,34 @@ function unSubscribeToStatusChange(workspaceId: string): void {
   }
   WorkspaceClient.jsonRpcMasterApi.unSubscribeWorkspaceStatus(workspaceId, callback);
   subscribedWorkspaceStatusCallbacks.delete(workspaceId);
+}
+
+function subscribeToEnvironmentOutput(workspaceId: string, dispatch: ThunkDispatch<State, undefined, UpdateWorkspacesLogsAction | DeleteWorkspaceLogsAction>): void {
+  const callback: EnvironmentOutputMessageHandler = message => {
+    if (message.text) {
+      const workspacesLogs = new Map<string, string[]>();
+      workspacesLogs.set(workspaceId, [`${message.text}\r`]);
+      dispatch({
+        type: 'UPDATE_WORKSPACES_LOGS',
+        workspacesLogs,
+      });
+    }
+  };
+  dispatch({
+    type: 'DELETE_WORKSPACE_LOGS',
+    workspaceId,
+  });
+  WorkspaceClient.jsonRpcMasterApi.subscribeEnvironmentOutput(workspaceId, callback);
+  subscribedEnvironmentOutputCallbacks.set(workspaceId, callback);
+}
+
+function unSubscribeToEnvironmentOutput(workspaceId: string): void {
+  const callback = subscribedEnvironmentOutputCallbacks.get(workspaceId);
+  if (!callback) {
+    return;
+  }
+  WorkspaceClient.jsonRpcMasterApi.unSubscribeEnvironmentOutput(workspaceId, callback);
+  subscribedEnvironmentOutputCallbacks.delete(workspaceId);
 }
 
 // ACTION CREATORS - These are functions exposed to UI components that will trigger a state transition.
@@ -168,7 +217,7 @@ export const actionCreators: ActionCreators = {
       const workspaces = await WorkspaceClient.restApiClient.getAll<che.Workspace>();
 
       // Unsubscribe
-      subscribedWorkspaceStatusCallbacks.forEach((workspaceStatusCallback: MessageHandler, workspaceId: string) => {
+      subscribedWorkspaceStatusCallbacks.forEach((workspaceStatusCallback: WorkspaceStatusMessageHandler, workspaceId: string) => {
         unSubscribeToStatusChange(workspaceId);
       });
 
@@ -199,7 +248,8 @@ export const actionCreators: ActionCreators = {
 
   startWorkspace: (workspaceId: string): AppThunk<KnownAction, Promise<void>> => async (dispatch): Promise<void> => {
     try {
-      const workspace = await WorkspaceClient.restApiClient.start(workspaceId);
+      const workspace = await WorkspaceClient.restApiClient.start<che.Workspace>(workspaceId);
+      subscribeToEnvironmentOutput(workspaceId, dispatch);
       dispatch({ type: 'UPDATE_WORKSPACE', workspace });
     } catch (e) {
       dispatch({ type: 'RECEIVE_ERROR' });
@@ -230,7 +280,7 @@ export const actionCreators: ActionCreators = {
     dispatch({ type: 'REQUEST_WORKSPACES' });
 
     try {
-      const updatedWorkspace = await WorkspaceClient.restApiClient.update(workspace.id, workspace as api.che.workspace.Workspace);
+      const updatedWorkspace = await WorkspaceClient.restApiClient.update<che.Workspace>(workspace.id, workspace as api.che.workspace.Workspace);
       dispatch({ type: 'UPDATE_WORKSPACE', workspace: updatedWorkspace });
     } catch (e) {
       dispatch({ type: 'RECEIVE_ERROR' });
@@ -240,19 +290,15 @@ export const actionCreators: ActionCreators = {
   },
 
   createWorkspaceFromDevfile: (
-    devfile: che.WorkspaceDevfile,
-    cheNamespace: string | undefined,
+    devfile: api.che.workspace.devfile.Devfile,
+    namespace: string | undefined,
     infrastructureNamespace: string | undefined,
     attributes: { [key: string]: string } = {},
   ): AppThunk<KnownAction, Promise<che.Workspace>> => async (dispatch): Promise<che.Workspace> => {
     dispatch({ type: 'REQUEST_WORKSPACES' });
     try {
-      const workspace = await createWorkspaceFromDevfile(
-        devfile,
-        cheNamespace,
-        infrastructureNamespace,
-        attributes
-      );
+      const param = { attributes, namespace, infrastructureNamespace };
+      const workspace = await WorkspaceClient.restApiClient.create<che.Workspace>(devfile, param);
       dispatch({ type: 'ADD_WORKSPACE', workspace });
       // Subscribe
       subscribeToStatusChange(workspace.id, dispatch);
@@ -285,7 +331,7 @@ export const actionCreators: ActionCreators = {
 
   clearWorkspaceId: (): AppThunk<ClearWorkspaceId> => dispatch => {
     dispatch({ type: 'CLEAR_WORKSPACE_ID' });
-  }
+  },
 
 };
 
@@ -293,6 +339,8 @@ const unloadedState: State = {
   workspaces: [],
   settings: {} as che.WorkspaceSettings,
   isLoading: false,
+
+  workspacesLogs: new Map<string, string[]>(),
 
   namespace: '',
   workspaceName: '',
@@ -303,6 +351,32 @@ const unloadedState: State = {
 
 type StatePartial = {
   [key in keyof State]: State[key];
+};
+
+const mapMerge = (originMap: Map<string, string[]>, additionalMap: Map<string, string[]>): Map<string, string[]> => {
+  if (!originMap.size) {
+    return additionalMap;
+  }
+  const res = new Map<string, string[]>();
+  originMap.forEach((val: string[], key: string) => {
+    const newVal = additionalMap.get(key);
+    res.set(key, newVal ? val.concat(newVal) : val);
+  });
+  additionalMap.forEach((val: string[], key: string) => {
+    if (!res.has(key)) {
+      res.set(key, val);
+    }
+  });
+  return res;
+};
+
+const mapDeleteKey = (originMap: Map<string, string[]>, key: string): Map<string, string[]> => {
+  if (!originMap.size) {
+    return originMap;
+  }
+  const res = new Map<string, string[]>(originMap.entries());
+  res.delete(key);
+  return res;
 };
 
 export const reducer: Reducer<State> = (state: State | undefined, action: KnownAction): State => {
@@ -331,7 +405,7 @@ export const reducer: Reducer<State> = (state: State | undefined, action: KnownA
             workspace.status = action.status;
           }
           return workspace;
-        })
+        }),
       });
     case 'ADD_WORKSPACE':
       return createState(state, {
@@ -369,6 +443,14 @@ export const reducer: Reducer<State> = (state: State | undefined, action: KnownA
     case 'CLEAR_WORKSPACE_ID':
       return createState(state, {
         workspaceId: '',
+      });
+    case 'UPDATE_WORKSPACES_LOGS':
+      return createState(state, {
+        workspacesLogs: mapMerge(state.workspacesLogs, action.workspacesLogs),
+      });
+    case 'DELETE_WORKSPACE_LOGS':
+      return createState(state, {
+        workspacesLogs: mapDeleteKey(state.workspacesLogs, state.workspaceId),
       });
     default:
       return state;

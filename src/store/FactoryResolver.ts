@@ -11,12 +11,20 @@
  */
 
 import { Action, Reducer } from 'redux';
-import { AppThunkAction, AppState } from './';
-import { fetchFactoryResolver } from '../services/api/factory-resolver';
+import { FactoryResolver } from '../services/types';
+import { AppState, AppThunk } from './';
+import { container } from '../inversify.config';
+import { CheWorkspaceClient } from '../services/workspace-client/CheWorkspaceClient';
+
+const WorkspaceClient = container.get(CheWorkspaceClient);
 
 export interface State {
   isLoading: boolean;
-  resolver: { location?: string; devfile?: che.WorkspaceDevfile; }
+  resolver: {
+    location?: string;
+    source?: string;
+    devfile?: api.che.workspace.devfile.Devfile;
+  }
 }
 
 interface RequestFactoryResolverAction {
@@ -25,7 +33,7 @@ interface RequestFactoryResolverAction {
 
 interface ReceiveFactoryResolverAction {
   type: 'RECEIVE_FACTORY_RESOLVER';
-  resolver: { location?: string; devfile?: che.WorkspaceDevfile; }
+  resolver: { location?: string; devfile?: api.che.workspace.devfile.Devfile; }
 }
 
 type KnownAction = RequestFactoryResolverAction
@@ -33,12 +41,11 @@ type KnownAction = RequestFactoryResolverAction
 
 // todo proper type instead of 'any'
 export type ActionCreators = {
-  requestFactoryResolver: (location: string) => any;
+  requestFactoryResolver: (location: string) => AppThunk<KnownAction, Promise<void>>;
 };
 
 export const actionCreators: ActionCreators = {
-
-  requestFactoryResolver: (location: string): AppThunkAction<KnownAction> => async (dispatch, getState): Promise<che.WorkspaceDevfile> => {
+  requestFactoryResolver: (location: string): AppThunk<KnownAction, Promise<void>> => async (dispatch, getState): Promise<void> => {
     const appState: AppState = getState();
     if (!appState || !appState.infrastructureNamespace) {
       // todo throw a nice error
@@ -48,11 +55,14 @@ export const actionCreators: ActionCreators = {
     dispatch({ type: 'REQUEST_FACTORY_RESOLVER' });
 
     try {
-      const devfile: che.WorkspaceDevfile = await fetchFactoryResolver(location);
-      dispatch({ type: 'RECEIVE_FACTORY_RESOLVER', resolver: { location: location, devfile: devfile } });
-      return devfile;
+      const data = await WorkspaceClient.restApiClient.getFactoryResolver<FactoryResolver>(location);
+      if (!data.devfile) {
+        throw new Error('The specified link does not contain a valid Devfile.');
+      }
+      dispatch({ type: 'RECEIVE_FACTORY_RESOLVER', resolver: { location: location, devfile: data.devfile, source: data.source } });
+      return;
     } catch (e) {
-      throw new Error('Failed to request factory resolver, \n' + e);
+      throw new Error(e.message ? e.message : 'Failed to request factory resolver');
     }
   },
 
@@ -76,7 +86,7 @@ export const reducer: Reducer<State> = (state: State | undefined, incomingAction
       });
     case 'RECEIVE_FACTORY_RESOLVER':
       return Object.assign({}, state, {
-        plugins: action.resolver,
+        resolver: action.resolver,
       });
     default:
       return state;

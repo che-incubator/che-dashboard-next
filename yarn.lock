@@ -466,13 +466,14 @@
   resolved "https://registry.yarnpkg.com/@eclipse-che/api/-/api-7.18.1.tgz#1beae9ebe694e4b58d0edfefcde07995ce6cd0b2"
   integrity sha512-KnnnDpnxxK0TBgR0Ux3oOYCvmCv6d4cRA+1j9wiLkaJighCqgCUaxnHWXEfolYbRq1+o/sfsxN+BxRDuF+H8wQ==
 
-"@eclipse-che/workspace-client@^0.0.1-1600695209":
-  version "0.0.1-1600695209"
-  resolved "https://registry.yarnpkg.com/@eclipse-che/workspace-client/-/workspace-client-0.0.1-1600695209.tgz#2b38606e90f71e96bac0f588be26dfd3d66e897e"
-  integrity sha512-7FeRqUvLBdrtpst3oBgzVpdlyX2WZ9ASBQB2nFXV+u6e5TFCzDuCWfuwga8TSEI2Gxz0PUFtbPO0YsGFk7VTrA==
+"@eclipse-che/workspace-client@^0.0.1-1604083811":
+  version "0.0.1-1604083811"
+  resolved "https://registry.yarnpkg.com/@eclipse-che/workspace-client/-/workspace-client-0.0.1-1604083811.tgz#a39b6316775bc4c768ed4a727de113d839d1c5a5"
+  integrity sha512-AdTJSKWiyyEj7yNvbo4cATjaezHzR4xYMZBKjGazo/iGO9cMCjbShoi4VAuXnDYeuMVDk+ZSfPf7/xQ7GDsLBQ==
   dependencies:
     "@eclipse-che/api" "^7.0.0-beta-4.0"
     axios "0.19.0"
+    qs "^6.9.4"
     tunnel "0.0.6"
     websocket "1.0.23"
 
@@ -6720,10 +6721,15 @@ mute-stream@0.0.8:
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.8.tgz#1630c42b2251ff81e2a283de96a5497ea92e5e0d"
   integrity sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==
 
-nan@^2.12.1, nan@^2.3.3:
+nan@^2.12.1:
   version "2.14.1"
   resolved "https://registry.yarnpkg.com/nan/-/nan-2.14.1.tgz#d7be34dfa3105b91494c3147089315eff8874b01"
   integrity sha512-isWHgVjnFjh2x2yuJ/tj3JbwoHu3UC2dX5G/88Cm24yB6YopVgxvBObDY7n5xW6ExmFhJpSEQqFPvq9zaXc8Jw==
+
+nan@^2.3.3:
+  version "2.14.2"
+  resolved "https://registry.yarnpkg.com/nan/-/nan-2.14.2.tgz#f5376400695168f4cc694ac9393d0c9585eeea19"
+  integrity sha512-M2ufzIiINKCuDfBSAUr1vWQ+vuVcA9kqx8JJUsbQi6yf1uGRyb7HfpdfUr5qLXf3B/t8dPvcjhKMmlfnP47EzQ==
 
 nanomatch@^1.2.9:
   version "1.2.13"
@@ -9876,9 +9882,9 @@ typescript-formatter@^7.2.2:
     editorconfig "^0.15.0"
 
 typescript@^3.9.3:
-  version "3.9.5"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.9.5.tgz#586f0dba300cde8be52dd1ac4f7e1009c1b13f36"
-  integrity sha512-hSAifV3k+i6lEoCJ2k6R2Z/rp/H3+8sdmcn5NrS3/3kE7+RyZXm9aqvxWqjEXHAd8b0pShatpcdMTvEdvAJltQ==
+  version "3.9.7"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.9.7.tgz#98d600a5ebdc38f40cb277522f12dc800e9e25fa"
+  integrity sha512-BLbiRkiBzAwsjut4x/dsibSTB6yWpwT5qWmC2OfuCg3GgVQCSgMs4vEctYPhsaGtd0AeuuHMkjZ2h2WG8MSzRw==
 
 umd-compat-loader@2.1.1:
   version "2.1.1"
