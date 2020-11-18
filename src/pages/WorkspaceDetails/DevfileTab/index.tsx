@@ -30,12 +30,12 @@ type Props = {
 };
 
 type State = {
-  devfile?: che.WorkspaceDevfile;
-  hasChanges?: boolean;
-  hasRequestErrors?: boolean;
-  currentRequestError?: string;
-  isDevfileValid?: boolean;
-  isExpanded?: boolean;
+  devfile: che.WorkspaceDevfile;
+  hasChanges: boolean;
+  hasRequestErrors: boolean;
+  currentRequestError: string;
+  isDevfileValid: boolean;
+  isExpanded: boolean;
   copied?: boolean;
 };
 
@@ -82,11 +82,11 @@ export class EditorTab extends React.PureComponent<Props, State> {
     }
   }
 
-  componentDidMount(): void {
+  public componentDidMount(): void {
     this.init();
   }
 
-  componentDidUpdate(): void {
+  public componentDidUpdate(): void {
     this.init();
   }
 

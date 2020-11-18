@@ -25,6 +25,7 @@ import {
   Tabs,
   Title,
 } from '@patternfly/react-core';
+import { fallback } from '../../App';
 import * as WorkspaceStore from '../../store/Workspaces';
 import { AppState } from '../../store';
 import { AlertItem } from '../../services/types';
@@ -117,7 +118,7 @@ export class GetStarted extends React.PureComponent<Props, State> {
     // force start for the new workspace
     try {
       await this.props.startWorkspace(`${workspace.id}`);
-      this.props.history.push(`/ide/${workspace.namespace}/${workspace.devfile.metadata.name}`);
+      this.props.history.push(`/ide/${workspace.namespace}/${workspaceName}`);
     } catch (error) {
       const errorMessage = `Workspace ${workspaceName} failed to start`;
       this.showAlert({
@@ -194,7 +195,7 @@ export class GetStarted extends React.PureComponent<Props, State> {
             activeKey={activeTabKey}
             onSelect={(event, tabKey) => this.handleTabClick(event, tabKey)}>
             <Tab eventKey={GET_STARTED_TAB_KEY} title="Get Started">
-              <Suspense fallback={<div>Loading...</div>}>
+              <Suspense fallback={fallback}>
                 <SamplesListTab
                   onDevfile={(devfileContent: string, stackName: string) => {
                     return this.handleDevfileContent(devfileContent, { stackName });
@@ -203,7 +204,7 @@ export class GetStarted extends React.PureComponent<Props, State> {
               </Suspense>
             </Tab>
             <Tab eventKey={CUSTOM_WORKSPACE_TAB_KEY} title="Custom Workspace">
-              <Suspense fallback={<div>Loading...</div>}>
+              <Suspense fallback={fallback}>
                 <CustomWorkspaceTab
                   onDevfile={(devfile: che.WorkspaceDevfile, infrastructureNamespace?: string) => {
                     return this.handleDevfile(devfile, { infrastructureNamespace });

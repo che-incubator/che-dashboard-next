@@ -10,10 +10,17 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
+import {
+  ExclamationCircleIcon,
+  InProgressIcon,
+  PauseCircleIcon,
+  ResourcesFullIcon,
+} from '@patternfly/react-icons/dist/js/icons';
 import React from 'react';
 import { WorkspaceStatus } from '../../../services/workspaceStatus';
+import { ColorType, StoppedIcon } from '../../WorkspaceStatusLabel';
 
-import './Indicator.styl';
+import styles from './Indicator.module.css';
 
 type Props = {
   status: string;
@@ -22,33 +29,38 @@ type Props = {
 class WorkspaceIndicator extends React.PureComponent<Props> {
 
   public render(): React.ReactElement {
-    const status = WorkspaceStatus[this.props.status];
+    const { status } = this.props;
 
-    if (status === WorkspaceStatus.STARTING || status === WorkspaceStatus.STOPPING) {
-      return (
-        <span className='workspace-status-indicator'>
-          <span className='workspace-status-spinner ng-scope'>
-            <div className='spinner'>
-              <div className='rect1' /><div className='rect2' /><div className='rect3' />
-            </div>
-          </span>
-        </span>
-      );
+    let color: ColorType;
+    let icon: React.ReactElement;
+    switch (status) {
+      case WorkspaceStatus[WorkspaceStatus.STOPPED]:
+        color = 'grey';
+        icon = <StoppedIcon color={color} />;
+        break;
+      case WorkspaceStatus[WorkspaceStatus.RUNNING]:
+        color = 'green';
+        icon = <ResourcesFullIcon color={color} />;
+        break;
+      case WorkspaceStatus[WorkspaceStatus.ERROR]:
+        color = 'red';
+        icon = <ExclamationCircleIcon color={color} />;
+        break;
+      case WorkspaceStatus[WorkspaceStatus.PAUSED]:
+        color = 'orange';
+        icon = <PauseCircleIcon color={color} />;
+        break;
+      default:
+        color = '#0e6fe0';
+        icon = <InProgressIcon className={styles.rotate} color={color} />;
     }
 
-    const iconClass = (status: WorkspaceStatus): string => {
-      if (status === WorkspaceStatus.ERROR) {
-        return 'codicon codicon-circle-filled workspace-status-error';
-      }
-      if (status === WorkspaceStatus.RUNNING) {
-        return 'codicon codicon-circle-filled';
-      }
-      return 'codicon codicon-circle-outline';
-    };
-
     return (
-      <span className='workspace-status-indicator'>
-        <i className={iconClass(status)} />
+      <span
+        className={styles.statusIndicator}
+        data-testid="workspace-status-indicator"
+      >
+        {icon}
       </span>
     );
   }

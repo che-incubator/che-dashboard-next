@@ -27,6 +27,7 @@ import {
   Text,
   Button,
 } from '@patternfly/react-core';
+import LogsTab from '../../components/LogsTab';
 import { WorkspaceStatus } from '../../services/workspaceStatus';
 import Header from './Header';
 import CheProgress from '../../components/Progress';
@@ -42,6 +43,7 @@ export const SECTION_THEME = PageSectionVariants.light;
 export enum WorkspaceDetailsTabs {
   Overview = 0,
   Devfile = 4,
+  Logs = 5
 }
 
 type Props =
@@ -58,10 +60,10 @@ type State = {
 };
 
 export class WorkspaceDetails extends React.PureComponent<Props, State> {
-  private alert: { variant?: AlertVariant.success | AlertVariant.danger; title?: string } = {};
-  public showAlert: (variant: AlertVariant.success | AlertVariant.danger, title: string, timeDelay?: number) => void;
+  private alert: { variant?: AlertVariant; title?: string } = {};
+  public showAlert: (variant: AlertVariant, title: string, timeDelay?: number) => void;
   private readonly hideAlert: () => void;
-  private readonly handleTabClick: (event: any, tabIndex: any) => void;
+  private readonly handleTabClick: (event: React.MouseEvent<HTMLElement, MouseEvent>, tabIndex: React.ReactText) => void;
 
   private readonly editorTabPageRef: React.RefObject<Editor>;
   private readonly overviewTabPageRef: React.RefObject<Overview>;
@@ -80,7 +82,7 @@ export class WorkspaceDetails extends React.PureComponent<Props, State> {
     };
 
     // Toggle currently active tab
-    this.handleTabClick = (event: any, tabIndex: any): void => {
+    this.handleTabClick = (event: React.MouseEvent<HTMLElement, MouseEvent>, tabIndex: React.ReactText): void => {
       if ((this.state.activeTabKey === WorkspaceDetailsTabs.Devfile && this.editorTabPageRef.current?.state.hasChanges) ||
         (this.state.activeTabKey === WorkspaceDetailsTabs.Overview && this.overviewTabPageRef.current?.hasChanges) ||
         this.props.isLoading) {
@@ -94,14 +96,18 @@ export class WorkspaceDetails extends React.PureComponent<Props, State> {
           (focusedElement as HTMLBaseElement).blur();
         }
         if (!this.props.isLoading) {
-          this.setState({ hasDiscardChangesMessage: true, clickedTabIndex: tabIndex });
+          this.setState({ hasDiscardChangesMessage: true, clickedTabIndex: tabIndex as WorkspaceDetailsTabs });
         }
         return;
       }
-      this.setState({ hasDiscardChangesMessage: false, clickedTabIndex: tabIndex, activeTabKey: tabIndex });
+      this.setState({
+        hasDiscardChangesMessage: false,
+        clickedTabIndex: tabIndex as WorkspaceDetailsTabs,
+        activeTabKey: tabIndex as WorkspaceDetailsTabs
+      });
     };
     let showAlertTimer;
-    this.showAlert = (variant: AlertVariant.success | AlertVariant.danger, title: string, timeDelay?: number): void => {
+    this.showAlert = (variant: AlertVariant, title: string, timeDelay?: number): void => {
       this.alert = { variant, title };
       this.setState({ alertVisible: true });
       if (showAlertTimer) {
@@ -183,6 +189,9 @@ export class WorkspaceDetails extends React.PureComponent<Props, State> {
                 workspace={workspace}
                 onSave={workspace => this.onSave(workspace)} />
             </Tab>
+            {/* <Tab eventKey={WorkspaceDetailsTabs.Logs} title={WorkspaceDetailsTabs[WorkspaceDetailsTabs.Logs]}>*/}
+            {/*  <LogsTab workspaceId={workspace.id} />*/}
+            {/* </Tab>*/}
           </Tabs>
           <Modal variant={ModalVariant.small} isOpen={this.state.hasDiscardChangesMessage}
             title="Unsaved Changes"

@@ -122,6 +122,7 @@ type KnownAction =
 
 export type ActionCreators = {
   requestWorkspaces: () => AppThunk<KnownAction, Promise<void>>;
+  requestWorkspace: (workspaceId: string) => AppThunk<KnownAction, Promise<void>>;
   startWorkspace: (workspaceId: string) => AppThunk<KnownAction, Promise<void>>;
   stopWorkspace: (workspaceId: string) => AppThunk<KnownAction, Promise<void>>;
   deleteWorkspace: (workspaceId: string) => AppThunk<KnownAction, Promise<void>>;
@@ -234,6 +235,19 @@ export const actionCreators: ActionCreators = {
 
   },
 
+  requestWorkspace: (workspaceId: string): AppThunk<KnownAction, Promise<void>> => async (dispatch): Promise<void> => {
+    dispatch({ type: 'REQUEST_WORKSPACES' });
+
+    try {
+      const workspace = await WorkspaceClient.restApiClient.getById<che.Workspace>(workspaceId);
+      dispatch({ type: 'UPDATE_WORKSPACE', workspace });
+    } catch (e) {
+      dispatch({ type: 'RECEIVE_ERROR' });
+      const message = e.response && e.response.data && e.response.data.message ? e.response.data.message : e.message;
+      throw new Error(`Failed to update. ${message}`);
+    }
+  },
+
   requestSettings: (): AppThunk<KnownAction, Promise<void>> => async (dispatch): Promise<void> => {
     dispatch({ type: 'REQUEST_WORKSPACES' });
 
@@ -253,7 +267,9 @@ export const actionCreators: ActionCreators = {
       dispatch({ type: 'UPDATE_WORKSPACE', workspace });
     } catch (e) {
       dispatch({ type: 'RECEIVE_ERROR' });
-      throw new Error(`Failed to start the workspace, ID: ${workspaceId}, ` + e);
+      const statusInfo = e.response && e.response.status ? ` Response code: ${e.response.status}.` : '';
+      const message = e.response && e.response.data && e.response.data.message ? e.response.data.message : e.message;
+      throw new Error(message ? message : `Unknown error happened.${statusInfo} Try again`);
     }
   },
 
@@ -359,8 +375,13 @@ const mapMerge = (originMap: Map<string, string[]>, additionalMap: Map<string, s
   }
   const res = new Map<string, string[]>();
   originMap.forEach((val: string[], key: string) => {
-    const newVal = additionalMap.get(key);
-    res.set(key, newVal ? val.concat(newVal) : val);
+    const merge = (val: string[], newVal: string[] | undefined): string[] => {
+      if (!newVal || (val.length > 0 && newVal.length === 1 && val[val.length - 1] === newVal[0])) {
+        return val;
+      }
+      return val.concat(newVal);
+    };
+    res.set(key, merge(val, additionalMap.get(key)));
   });
   additionalMap.forEach((val: string[], key: string) => {
     if (!res.has(key)) {

@@ -43,9 +43,8 @@ describe('Navigation Item', () => {
 
   it('should have workspace status icon', () => {
     renderComponent();
-
-    const link = screen.getByRole('link');
-    expect(link.outerHTML).toMatch('workspace-status-indicator');
+    const workspaceStatusIndicator = screen.getByTestId('workspace-status-indicator');
+    expect(workspaceStatusIndicator).toBeDefined();
   });
 
   describe('activation', () => {

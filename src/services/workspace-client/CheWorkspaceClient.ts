@@ -33,6 +33,47 @@ export class CheWorkspaceClient {
     this.websocketContext = '/api/websocket';
 
     this.originLocation = new URL(window.location.href).origin;
+
+    // todo change this temporary solution after adding the proper method to workspace-client https://github.com/eclipse/che/issues/18311
+    const axios = (WorkspaceClient as any).createAxiosInstance({ loggingEnabled: false });
+    if (axios) {
+      let isUpdated: boolean;
+      const updateTimer = () => {
+        if (!isUpdated) {
+          isUpdated = true;
+          setTimeout(() => {
+            isUpdated = false;
+          }, 30000);
+        }
+      };
+      updateTimer();
+      axios.interceptors.request.use(async request => {
+        const keycloak = KeycloakSetup.keycloakAuth.keycloak as any;
+        if (keycloak && keycloak.updateToken && !isUpdated) {
+          updateTimer();
+          try {
+            await new Promise((resolve, reject) => {
+              keycloak.updateToken(5).success((refreshed: boolean) => {
+                if (refreshed && keycloak.token && axios.defaults && axios.defaults.headers && axios.defaults.headers.common) {
+                  const header = 'Authorization';
+                  axios.defaults.headers.common[header] = `Bearer ${keycloak.token}`;
+                }
+                resolve(keycloak);
+              }).error((error: any) => {
+                reject(new Error(error));
+              });
+            });
+          } catch (e) {
+            console.error('Failed to update token.', e);
+            window.sessionStorage.setItem('oidcDashboardRedirectUrl', location.href);
+            if (keycloak.login) {
+              keycloak.login();
+            }
+          }
+        }
+        return request;
+      });
+    }
   }
 
   private get token(): string | null {
