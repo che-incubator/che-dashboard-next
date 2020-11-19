@@ -31,4 +31,29 @@ module.exports = {
   },
   maxWorkers: 4,
   setupFilesAfterEnv: ['./jest.setup.ts'],
+  collectCoverage: false,
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+
+    '!src/**/*.d.{ts,tsx}',
+    '!src/**/*.config.ts',
+    '!src/**/*.enum.ts',
+    '!src/index.tsx',
+    '!src/App.tsx',
+    '!src/Routes.tsx',
+  ],
+  coverageDirectory: './coverage',
+  coverageReporters: [
+    ['html', { coverageDirectory: './coverage_html' }],
+    //['html-spa', {coverageDirectory: './coverage_html-spa' }],
+    'text-summary'
+  ],
+  coverageThreshold: {
+    global: {
+      statements: 29,
+      branches: 18,
+      functions: 24,
+      lines: 29,
+    }
+  },
 }
