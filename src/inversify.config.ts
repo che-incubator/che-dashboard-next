@@ -15,6 +15,7 @@ import { KeycloakSetup } from './services/bootstrap/KeycloakSetup';
 import { Keycloak } from './services/keycloak/Keycloak';
 import { Debounce } from './services/helpers/debounce';
 import { CheWorkspaceClient } from './services/workspace-client/CheWorkspaceClient';
+import { AppAlerts } from './services/alerts/appAlerts';
 
 const container = new Container();
 
@@ -22,5 +23,6 @@ container.bind(KeycloakSetup).toSelf().inSingletonScope();
 container.bind(Keycloak).toSelf().inSingletonScope();
 container.bind(Debounce).toSelf();
 container.bind(CheWorkspaceClient).toSelf().inSingletonScope();
+container.bind(AppAlerts).toSelf().inSingletonScope();
 
 export { container };

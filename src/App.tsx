@@ -10,27 +10,22 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { Spinner, spinnerSize } from '@patternfly/react-core';
-import React, { Suspense } from 'react';
-import { Redirect, Switch } from 'react-router';
 import { ConnectedRouter } from 'connected-react-router';
+import AppAlertGroup from './components/AppAlertGroup';
+import { fallback } from './components/Fallback';
+import { Redirect, Switch } from 'react-router';
+import React, { Suspense } from 'react';
 import { History } from 'history';
-
-import Routes from './Routes';
 import Layout from './Layout';
+import Routes from './Routes';
 
 import './app.styl';
-
-export const fallback = (
-  <div style={{ height: '100%', textAlign: 'center', opacity: '0.5' }}>
-    <Spinner size={spinnerSize.xl} style={{ top: 'calc(50% - 18px)' }} />
-  </div>
-);
 
 function AppComponent(props: { history: History }): React.ReactElement {
   return (
     <ConnectedRouter history={props.history}>
       <Layout history={props.history}>
+        <AppAlertGroup />
         <Suspense fallback={fallback}>
           <Switch>
             <Routes />
