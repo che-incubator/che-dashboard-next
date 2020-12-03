@@ -15,18 +15,19 @@ import { connect, ConnectedProps } from 'react-redux';
 import { Button, Form, PageSection, PageSectionVariants, } from '@patternfly/react-core';
 import { AppState } from '../../../store';
 import DevfileEditor, { DevfileEditor as Editor } from '../../../components/DevfileEditor';
-import StorageTypeFormGroup, { StorageType } from './StorageType';
+import StorageTypeFormGroup from './StorageType';
 import { WorkspaceNameFormGroup } from './WorkspaceName';
 import DevfileSelectorFormGroup from './DevfileSelector';
 import InfrastructureNamespaceFormGroup from './InfrastructureNamespace';
 import { selectSettings } from '../../../store/Workspaces/selectors';
+import { attributesToType, updateDevfile } from '../../../services/storageTypes';
 
 type Props = MappedProps
   & {
     onDevfile: (devfile: che.WorkspaceDevfile, InfrastructureNamespace: string | undefined) => Promise<void>;
   };
 type State = {
-  storageType: StorageType;
+  storageType: che.WorkspaceStorageType;
   devfile: che.WorkspaceDevfile;
   namespace?: che.KubernetesNamespace;
   generateName?: string;
@@ -41,7 +42,7 @@ export class CustomWorkspaceTab extends React.PureComponent<Props, State> {
     super(props);
 
     const devfile = this.buildInitialDevfile();
-    const storageType = this.getStorageType(devfile);
+    const storageType = attributesToType(devfile.attributes);
     const workspaceName = devfile.metadata.name ? devfile.metadata.name : '';
     const generateName = !workspaceName ? devfile.metadata.generateName : '';
     this.state = { devfile, storageType, generateName, workspaceName };
@@ -82,39 +83,19 @@ export class CustomWorkspaceTab extends React.PureComponent<Props, State> {
     this.updateEditor(devfile);
   }
 
-  private handleStorageChange(storageType: StorageType, workspaceDevfile?: che.WorkspaceDevfile): void {
+  private handleStorageChange(storageType: che.WorkspaceStorageType, workspaceDevfile?: che.WorkspaceDevfile): void {
     const devfile = workspaceDevfile ? workspaceDevfile : this.state.devfile;
     if (!devfile) {
       return;
     }
-    switch (storageType) {
-      case StorageType.persistent:
-        if (devfile.attributes) {
-          delete devfile.attributes.persistVolumes;
-          delete devfile.attributes.asyncPersist;
-          if (Object.keys(devfile.attributes).length === 0) {
-            delete devfile.attributes;
-          }
-        }
-        break;
-      case StorageType.ephemeral:
-        if (!devfile.attributes) {
-          devfile.attributes = {};
-        }
-        devfile.attributes.persistVolumes = 'false';
-        delete devfile.attributes.asyncPersist;
-        break;
-      case StorageType.async:
-        if (!devfile.attributes) {
-          devfile.attributes = {};
-        }
-        devfile.attributes.persistVolumes = 'false';
-        devfile.attributes.asyncPersist = 'true';
-        break;
-    }
 
-    this.setState({ storageType, devfile });
-    this.updateEditor(devfile);
+    const newDevfile = updateDevfile(devfile, storageType);
+
+    this.setState({
+      storageType,
+      devfile: newDevfile,
+    });
+    this.updateEditor(newDevfile);
   }
 
   private handleNewDevfile(devfileContent?: che.WorkspaceDevfile): void {
@@ -134,28 +115,12 @@ export class CustomWorkspaceTab extends React.PureComponent<Props, State> {
     }
   }
 
-  private getStorageType(devfile: che.WorkspaceDevfile): StorageType {
-    let storageType: StorageType;
-    // storage type
-    if (devfile.attributes && devfile.attributes.persistVolumes === 'false') {
-      const isAsync = devfile.attributes && devfile.attributes.asyncPersist === 'true';
-      if (isAsync) {
-        storageType = StorageType.async;
-      } else {
-        storageType = StorageType.ephemeral;
-      }
-    } else {
-      storageType = StorageType.persistent;
-    }
-    return storageType;
-  }
-
   private handleDevfileChange(devfile: che.WorkspaceDevfile, isValid: boolean): void {
     if (!isValid) {
       return;
     }
     this.setState({ devfile });
-    const storageType = this.getStorageType(devfile);
+    const storageType = attributesToType(devfile.attributes);
     if (storageType !== this.state.storageType) {
       this.setState({ storageType });
     }
