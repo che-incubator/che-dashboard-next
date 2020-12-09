@@ -30,7 +30,9 @@ const store = configureStore(history);
 
 const ROOT = document.querySelector('.ui-container');
 // preload app data
-new PreloadData(store).init().then(() => {
-  console.log('UD: preload data complete successfully.');
-  ReactDOM.render(<Provider store={store}><App history={history} /></Provider>, ROOT);
-});
+new PreloadData(store).init()
+  .then(() => console.log('UD: preload data complete successfully.'))
+  .catch(error => console.log('UD: preload data failed.', error))
+  .finally(() => {
+    ReactDOM.render(<Provider store={store}><App history={history} /></Provider>, ROOT);
+  });

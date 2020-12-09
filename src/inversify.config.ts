@@ -11,16 +11,18 @@
  */
 
 import { Container } from 'inversify';
-import { KeycloakSetup } from './services/bootstrap/KeycloakSetup';
-import { Keycloak } from './services/keycloak/Keycloak';
+import { KeycloakSetupService } from './services/keycloak/setup';
+import { KeycloakAuthService } from './services/keycloak/auth';
 import { Debounce } from './services/helpers/debounce';
-import { CheWorkspaceClient } from './services/workspace-client/CheWorkspaceClient';
+import { CheWorkspaceClient } from './services/cheWorkspaceClient';
 import { AppAlerts } from './services/alerts/appAlerts';
+import { IssuesReporterService } from './services/bootstrap/issuesReporter';
 
 const container = new Container();
 
-container.bind(KeycloakSetup).toSelf().inSingletonScope();
-container.bind(Keycloak).toSelf().inSingletonScope();
+container.bind(IssuesReporterService).toSelf().inSingletonScope();
+container.bind(KeycloakSetupService).toSelf().inSingletonScope();
+container.bind(KeycloakAuthService).toSelf().inSingletonScope();
 container.bind(Debounce).toSelf();
 container.bind(CheWorkspaceClient).toSelf().inSingletonScope();
 container.bind(AppAlerts).toSelf().inSingletonScope();

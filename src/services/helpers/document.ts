@@ -10,13 +10,15 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { Spinner, spinnerSize } from '@patternfly/react-core';
-import React from 'react';
+function isDocumentReady(): Promise<void> {
+  return new Promise<void>(resolve => {
+    const state = document.readyState;
+    if (state === 'interactive' || state === 'complete') {
+      resolve();
+    } else {
+      document.onreadystatechange = (): void => resolve();
+    }
+  });
+}
 
-const Fallback = (
-  <div style={{ height: '100%', textAlign: 'center', opacity: '0.5' }}>
-    <Spinner size={spinnerSize.xl} style={{ top: 'calc(50% - 18px)' }} />
-  </div>
-);
-
-export default Fallback;
+export default isDocumentReady;

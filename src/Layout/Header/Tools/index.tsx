@@ -22,7 +22,7 @@ import {
   PageHeaderToolsItem,
 } from '@patternfly/react-core';
 
-import { ThemeVariant } from './themeVariant';
+import { ThemeVariant } from '../../themeVariant';
 
 type Props = {
   userEmail: string;
@@ -34,7 +34,7 @@ type State = {
   isOpen: boolean;
 }
 
-export class HeaderTools extends React.PureComponent<Props, State> {
+export default class HeaderTools extends React.PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);

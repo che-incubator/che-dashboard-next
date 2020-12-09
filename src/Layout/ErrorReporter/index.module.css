@@ -10,13 +10,11 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { Spinner, spinnerSize } from '@patternfly/react-core';
-import React from 'react';
+.backdropBackground {
+  background-color: black;
+}
 
-const Fallback = (
-  <div style={{ height: '100%', textAlign: 'center', opacity: '0.5' }}>
-    <Spinner size={spinnerSize.xl} style={{ top: 'calc(50% - 18px)' }} />
-  </div>
-);
-
-export default Fallback;
+.errorMessageContainer {
+  padding: 50px;
+  background-color: white;
+}
