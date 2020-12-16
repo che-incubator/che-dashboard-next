@@ -27,3 +27,14 @@
 .workspaceStatus > *:hover {
   color: #4a90e2;
 }
+
+.infoModalHeader {
+  font-weight: bold;
+  font-size: larger;
+}
+
+.infoModalHeader svg {
+  margin: 0 0.4rem;
+  color: var(--pf-global--warning-color--100);
+  font-size: 1.5rem;
+}
