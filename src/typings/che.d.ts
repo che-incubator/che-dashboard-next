@@ -12,6 +12,8 @@
 
 declare namespace che {
 
+  export type ConfigurableMenuItem = 'getstarted' | 'workspaces';
+
   export interface Workspace {
     id: string;
     projects?: any;

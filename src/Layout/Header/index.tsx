@@ -60,9 +60,6 @@ export default class Header extends React.PureComponent<Props, State> {
   public render(): React.ReactElement {
     const logo = <Brand src={this.props.logoUrl} alt='Logo' />;
 
-    const userEmail = this.props.user?.email || '';
-    const userName = this.props.user?.name || '';
-
     const className = this.state.isVisible ? styles.headerShow : styles.headerHide;
 
     return (
@@ -74,8 +71,7 @@ export default class Header extends React.PureComponent<Props, State> {
         onNavToggle={() => this.toggleNav()}
         headerTools={
           <HeaderTools
-            userEmail={userEmail}
-            userName={userName}
+            user={this.props.user}
             logout={() => this.props.logout()}
             changeTheme={theme => this.props.changeTheme(theme)}
           />

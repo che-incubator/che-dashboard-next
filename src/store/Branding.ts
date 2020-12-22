@@ -13,6 +13,7 @@
 import { Action, Reducer } from 'redux';
 import { fetchBranding } from '../services/assets/branding';
 import { AppThunkAction, AppState } from '.';
+import { merge } from 'lodash';
 import { BRANDING_DEFAULT, BrandingData } from '../services/bootstrap/branding.constant';
 
 const ASSET_PREFIX = './assets/branding/';
@@ -59,17 +60,8 @@ export const actionCreators: ActionCreators = {
       });
 
       try {
-        const branding = await fetchBranding(url);
-
-        // resolve asset paths
-        const assetTitles: Array<keyof BrandingData> = ['logoFile', 'logoTextFile', 'favicon', 'loader'];
-        assetTitles.forEach(asset => {
-          const path = branding[asset] as string;
-          if (path.startsWith(ASSET_PREFIX)) {
-            return;
-          }
-          branding[asset] = ASSET_PREFIX + branding[asset];
-        });
+        const receivedBranding = await fetchBranding(url);
+        const branding = getBrandingData(receivedBranding);
 
         dispatch({
           type: 'RECEIVED_BRANDING',
@@ -86,7 +78,7 @@ export const actionCreators: ActionCreators = {
 
 const unloadedState: State = {
   isLoading: false,
-  data: BRANDING_DEFAULT,
+  data: getBrandingData(),
 };
 
 export const reducer: Reducer<State> = (state: State | undefined, incomingAction: Action): State => {
@@ -109,3 +101,22 @@ export const reducer: Reducer<State> = (state: State | undefined, incomingAction
       return state;
   }
 };
+
+function getBrandingData(receivedBranding?: { [key: string]: any }): BrandingData {
+  let branding: BrandingData = Object.assign({}, BRANDING_DEFAULT);
+
+  if (receivedBranding && Object.keys(receivedBranding).length > 0) {
+    branding = merge(branding, receivedBranding);
+  }
+  // resolve asset paths
+  const assetTitles: Array<keyof BrandingData> = ['logoFile', 'logoTextFile', 'favicon', 'loader'];
+  assetTitles.forEach((asset: string) => {
+    const path = branding[asset] as string;
+    if (path.startsWith(ASSET_PREFIX)) {
+      return;
+    }
+    branding[asset] = ASSET_PREFIX + branding[asset];
+  });
+
+  return branding;
+}

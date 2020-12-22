@@ -11,9 +11,15 @@
  */
 
 import React from 'react';
+import { Provider } from 'react-redux';
 import renderer from 'react-test-renderer';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { Action, Store } from 'redux';
 import HeaderTools from '..';
+import { AppThunk } from '../../../../store';
+import { FakeStoreBuilder } from '../../../../store/__mocks__/storeBuilder';
+import { BrandingData } from '../../../../services/bootstrap/branding.constant';
+import * as InfrastructureNamespaceStore from '../../../../store/InfrastructureNamespace';
 
 jest.mock('gravatar-url', () => {
   return function () {
@@ -21,19 +27,42 @@ jest.mock('gravatar-url', () => {
   };
 });
 
+jest.mock('../../../../store/InfrastructureNamespace', () => {
+  return {
+    actionCreators: {
+      requestNamespaces: (): AppThunk<Action, Promise<void>> => async (dispatch): Promise<void> => {
+        return Promise.resolve();
+      }
+    } as InfrastructureNamespaceStore.ActionCreators,
+  };
+});
+
 describe('Page header tools', () => {
   const mockLogout = jest.fn();
   const mockChangeTheme = jest.fn();
+  const mockOnCopyLoginCommand = jest.fn();
 
+  const cheCliTool = 'crwctl';
   const email = 'johndoe@example.com';
   const name = 'John Doe';
+  const store = createStore(cheCliTool);
+  const user = {
+    id: 'test-id',
+    name: name,
+    email: email,
+    links: [],
+  };
 
-  const component = (<HeaderTools
-    userEmail={email}
-    userName={name}
-    logout={mockLogout}
-    changeTheme={mockChangeTheme}
-  />);
+  const component = (
+    <Provider store={store}>
+      <HeaderTools
+        user={user}
+        logout={mockLogout}
+        changeTheme={mockChangeTheme}
+        onCopyLoginCommand={mockOnCopyLoginCommand}
+      />
+    </Provider>
+  );
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -50,7 +79,7 @@ describe('Page header tools', () => {
     fireEvent.click(menuButton);
 
     const items = screen.getAllByRole('menuitem');
-    expect(items.length).toEqual(3);
+    expect(items.length).toEqual(4);
   });
 
   it('should fire the logout event', () => {
@@ -65,4 +94,26 @@ describe('Page header tools', () => {
     expect(mockLogout).toBeCalled();
   });
 
+  it('should send a request', () => {
+    render(component);
+
+    const menuButton = screen.getByRole('button', { name });
+    fireEvent.click(menuButton);
+
+    const copyLoginCommandButton = screen.getByText(`Copy ${cheCliTool} login command`);
+    fireEvent.click(copyLoginCommandButton);
+
+    expect(mockOnCopyLoginCommand).toBeCalled();
+  });
+
 });
+
+function createStore(cheCliTool: string): Store {
+  return new FakeStoreBuilder()
+    .withBranding({
+      configuration: {
+        cheCliTool
+      }
+    } as BrandingData)
+    .build();
+}

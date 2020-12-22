@@ -46,18 +46,35 @@ class AppAlertGroup extends React.PureComponent<Props, State> {
     this.appAlerts.unsubscribe(this.showAlertHandler);
   }
 
+  private getTime(variant: AlertVariant): number {
+    let time: number;
+
+    switch (variant) {
+      case AlertVariant.success:
+        time = 2000;
+        break;
+      case AlertVariant.info:
+        time = 8000;
+        break;
+      default:
+        time = 20000;
+    }
+
+    return time;
+  }
+
   private getAlert(item: AlertItem): React.ReactElement {
-    const { variant, title, key } = item;
+    const { variant, title, key, children } = item;
     const showAlertTimer = setTimeout(() => {
       this.appAlerts.removeAlert(key);
-    }, variant === AlertVariant.success ? 2000 : 8000);
+    }, this.getTime(variant));
     return (
       <Alert variant={variant} title={title} key={key} actionClose={
         <AlertActionCloseButton onClose={() => {
           clearTimeout(showAlertTimer);
           this.appAlerts.removeAlert(key);
         }} />
-      } />);
+      } >{children ? children : ''}</Alert>);
   }
 
   public render(): React.ReactElement {
