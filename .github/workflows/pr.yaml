@@ -6,6 +6,7 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 #
+
 name: PR
 # Trigger the workflow on push
 on:
@@ -20,7 +21,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [10.x, 12.x, 14.x]
+        node-version: [12.x, 14.x]
 
     steps:
     - name: Checkout che-dashboard-next source code
