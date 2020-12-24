@@ -34,6 +34,7 @@ type AboutModalItemsProps = {
   productName: string | undefined;
   browserVersion: string | null | undefined;
   browserOS: string | null | undefined;
+  browserName: string | null | undefined;
 };
 
 const AboutModalItems: React.FC<AboutModalItemsProps> = (
@@ -44,6 +45,7 @@ const AboutModalItems: React.FC<AboutModalItemsProps> = (
   const username = props.username;
   const browserVersion = props.browserVersion;
   const browserOS = props.browserOS;
+  const browserName = props.browserName;
   return (
     <>
       <TextContent>
@@ -61,6 +63,14 @@ const AboutModalItems: React.FC<AboutModalItemsProps> = (
               <TextListItem component='dt'>Username</TextListItem>
               <TextListItem component='dd' className='co-select-to-copy'>
                 {username}
+              </TextListItem>
+            </>
+          )}
+          {browserName && (
+            <>
+              <TextListItem component='dt'>Browser Name</TextListItem>
+              <TextListItem component='dd' className='co-select-to-copy'>
+                {browserName}
               </TextListItem>
             </>
           )}
@@ -97,6 +107,7 @@ export class AboutModal extends React.PureComponent<AboutModalProps> {
     const browser = detect();
     const browserVersion = browser?.version;
     const browserOS = browser?.os;
+    const browserName = browser?.name;
 
     return (
       <PatternflyAboutModal
@@ -111,6 +122,7 @@ export class AboutModal extends React.PureComponent<AboutModalProps> {
           username={userName}
           browserOS={browserOS}
           browserVersion={browserVersion}
+          browserName={browserName}
           productName={productName}
         />
       </PatternflyAboutModal>
