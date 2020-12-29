@@ -780,7 +780,7 @@
 | [`randomfill@1.0.4`](https://github.com/crypto-browserify/randomfill.git) | MIT | [CQ16925](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=16925) |
 | [`range-parser@1.2.1`](https://github.com/jshttp/range-parser.git) | MIT | [CQ16925](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=16925) |
 | [`raw-body@2.4.0`](https://github.com/stream-utils/raw-body.git) | MIT | clearlydefined |
-| [`react-shallow-renderer@16.14.1`](https://github.com/NMinhNguyen/react-shallow-renderer.git) | MIT | [CQ22418](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=22919) |
+| [`react-shallow-renderer@16.14.1`](https://github.com/NMinhNguyen/react-shallow-renderer.git) | MIT |  |
 | [`react-test-renderer@17.0.1`](https://github.com/facebook/react.git) | MIT | clearlydefined |
 | [`read-pkg-up@7.0.1`](https://github.com/sindresorhus/read-pkg-up.git) | MIT | clearlydefined |
 | [`read-pkg@5.2.0`](https://github.com/sindresorhus/read-pkg.git) | MIT | clearlydefined |

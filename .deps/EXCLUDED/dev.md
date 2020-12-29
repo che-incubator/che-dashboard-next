@@ -1,8 +1,6 @@
+This file contains a manual contribution to .deps/dev.md and it's needed because eclipse/dash-licenses does not deal with work-with CQs (more see https://github.com/eclipse/dash-licenses/issues/13)
 | Packages | Resolved CQs |
 | --- | --- |
-| `che-dashboard-e2e@1.0.0` | - |
-| `@eclipse-che/api@7.18.1` | - |
-| `@eclipse-che/workspace-client@0.0.1-1608729566` | - |
 | `@babel/parser@7.10.2` | [CQ22386](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=22386) |
 | `@types/axios@0.14.0` | [CQ22386](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=22386) |
 | `@types/react-redux@7.1.9` | [CQ22386](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=22386) |
@@ -32,4 +30,3 @@
 | `remark-stringify@8.1.0` | [CQ22418](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=22418) |
 | `trim@0.0.1` | [CQ22418](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=22418) |
 | `x-is-string@0.1.0` | [CQ22418](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=22418) |
-| `react-shallow-renderer@16.14.1` | [CQ22418](https://dev.eclipse.org/ipzilla/show_bug.cgi?id=22919) |
