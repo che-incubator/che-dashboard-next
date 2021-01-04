@@ -22,7 +22,7 @@ let workspaces: che.Workspace[];
 let isSelectedAll: boolean;
 let isEnabledDelete: boolean;
 const mockOnAddWorkspace = jest.fn();
-const mockOnDeleteSelected = jest.fn();
+const mockOnBulkDelete = jest.fn();
 const mockOnFilter = jest.fn();
 const mockOnToggleSelectAll = jest.fn();
 
@@ -34,7 +34,7 @@ describe('Workspaces List Toolbar', () => {
       selectedAll={isSelectedAll}
       enabledDelete={isEnabledDelete}
       onAddWorkspace={() => mockOnAddWorkspace()}
-      onDeleteSelected={() => mockOnDeleteSelected()}
+      onBulkDelete={() => mockOnBulkDelete()}
       onFilter={filtered => mockOnFilter(filtered)}
       onToggleSelectAll={isSelectedAll => mockOnToggleSelectAll(isSelectedAll)}
     />);
@@ -111,7 +111,7 @@ describe('Workspaces List Toolbar', () => {
     expect(deleteButton).toBeEnabled();
 
     userEvent.click(deleteButton);
-    expect(mockOnDeleteSelected).toHaveBeenCalled();
+    expect(mockOnBulkDelete).toHaveBeenCalled();
   });
 
   it('should emit event when adding a new workspace', () => {

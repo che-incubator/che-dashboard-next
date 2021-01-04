@@ -22,7 +22,7 @@ type Props = {
   workspaces: che.Workspace[],
   enabledDelete: boolean;
   onAddWorkspace: () => void;
-  onDeleteSelected: () => Promise<void>;
+  onBulkDelete: () => Promise<void>;
   onFilter: (filtered: che.Workspace[]) => void;
   onToggleSelectAll: (checked: boolean) => void;
 };
@@ -89,8 +89,8 @@ export default class WorkspacesListToolbar extends React.PureComponent<Props, St
     this.props.onFilter(workspaces);
   }
 
-  private async handleDeleteSelected(): Promise<void> {
-    this.props.onDeleteSelected();
+  private async handleBulkDelete(): Promise<void> {
+    this.props.onBulkDelete();
   }
 
   private handleAddWorkspace(): void {
@@ -166,7 +166,7 @@ export default class WorkspacesListToolbar extends React.PureComponent<Props, St
             variant="primary"
             aria-label="Delete selected workspaces"
             isDisabled={enabledDelete === false}
-            onClick={() => this.handleDeleteSelected()}
+            onClick={() => this.handleBulkDelete()}
           >
             Delete
           </Button>

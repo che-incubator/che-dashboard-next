@@ -19,7 +19,7 @@ import {
   EmptyStateIcon,
   EmptyStateBody,
 } from '@patternfly/react-core';
-import { CubesIcon, PlusCircleIcon } from '@patternfly/react-icons';
+import { CubesIcon } from '@patternfly/react-icons';
 
 type Props = {
   onAddWorkspace: () => void;

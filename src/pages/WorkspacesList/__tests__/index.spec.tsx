@@ -14,7 +14,7 @@
 
 import React from 'react';
 import { createHashHistory } from 'history';
-import { render, screen, RenderResult } from '@testing-library/react';
+import { render, screen, RenderResult, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import WorkspacesList from '..';
 import { BrandingData } from '../../../services/bootstrap/branding.constant';
@@ -35,6 +35,7 @@ let workspaces: che.Workspace[];
 let isDeleted: string[];
 
 const mockOnAction = jest.fn().mockResolvedValue('');
+const mockShowConfirmation = jest.fn().mockResolvedValue(undefined);
 
 describe('Workspaces List Page', () => {
 
@@ -128,7 +129,7 @@ describe('Workspaces List Page', () => {
 
     describe('Delete Button', () => {
 
-      it('should emit event', () => {
+      it('should emit event', async () => {
         renderComponent();
 
         const deleteSelectedButton = screen.getByRole('button', { name: /delete selected workspaces/i });
@@ -142,7 +143,8 @@ describe('Workspaces List Page', () => {
         expect(deleteSelectedButton).toBeEnabled();
         userEvent.click(deleteSelectedButton);
 
-        expect(mockOnAction).toHaveBeenCalledTimes(3);
+        await waitFor(() => expect(mockOnAction).toHaveBeenCalledTimes(3));
+
         expect(mockOnAction).toHaveBeenCalledWith(WorkspaceAction.DELETE_WORKSPACE, workspaces[0].id);
         expect(mockOnAction).toHaveBeenCalledWith(WorkspaceAction.DELETE_WORKSPACE, workspaces[1].id);
         expect(mockOnAction).toHaveBeenCalledWith(WorkspaceAction.DELETE_WORKSPACE, workspaces[2].id);
@@ -180,7 +182,7 @@ describe('Workspaces List Page', () => {
 
       // check number of menu items shown
       menuItems = screen.getAllByRole('menuitem');
-      expect(menuItems.length).toEqual(5);
+      expect(menuItems.length).toEqual(4);
 
       // check state of action buttons
       const startDebugAction = screen.getByRole('button', { name: /verbose mode/i });
@@ -191,8 +193,6 @@ describe('Workspaces List Page', () => {
       expect(stopAction).toBeDisabled();
       const deleteAction = screen.getByRole('button', { name: /delete workspace/i });
       expect(deleteAction).toBeEnabled();
-      const addProjectAction = screen.getByRole('button', { name: /add project/i });
-      expect(addProjectAction).toBeEnabled();
     });
 
     it('should not open the kebab menu while workspace is being deleted', () => {
@@ -252,20 +252,7 @@ describe('Workspaces List Page', () => {
       expect(mockOnAction).toHaveBeenCalledWith(WorkspaceAction.STOP_WORKSPACE, workspaces[0].id);
     });
 
-    it('should handle "Add Project" action', () => {
-      renderComponent();
-
-      const actionButtons = screen.getAllByRole('button', { name: /actions/i });
-      // click the kebab button on the first workspace row
-      userEvent.click(actionButtons[0]);
-
-      const addProjectAction = screen.getByRole('button', { name: /add project/i });
-      userEvent.click(addProjectAction);
-
-      expect(mockOnAction).toHaveBeenCalledWith(WorkspaceAction.ADD_PROJECT, workspaces[0].id);
-    });
-
-    it('should handle "Delete Workspace" action', () => {
+    it('should handle "Delete Workspace" action', async () => {
       renderComponent();
 
       const actionButtons = screen.getAllByRole('button', { name: /actions/i });
@@ -274,6 +261,8 @@ describe('Workspaces List Page', () => {
 
       const deleteAction = screen.getByRole('button', { name: /delete workspace/i });
       userEvent.click(deleteAction);
+
+      await waitFor(() => expect(mockOnAction).toHaveBeenCalled());
 
       expect(mockOnAction).toHaveBeenCalledWith(WorkspaceAction.DELETE_WORKSPACE, workspaces[0].id);
     });
@@ -319,6 +308,7 @@ function getComponent(): React.ReactElement {
       history={history}
       workspaces={workspaces}
       onAction={mockOnAction}
+      showConfirmation={mockShowConfirmation}
       isDeleted={isDeleted}
     >
     </WorkspacesList>

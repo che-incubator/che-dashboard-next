@@ -26,12 +26,6 @@ export const selectFilterValue = createSelector(
   state => state.filter
 );
 
-const selectFilterTokens = createSelector(
-  selectFilterValue,
-  value =>
-    value.toLowerCase().split(/\s+/)
-);
-
 export const selectMetadataFiltered = createSelector(
   selectState,
   selectFilterValue,

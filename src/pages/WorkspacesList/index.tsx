@@ -66,6 +66,7 @@ type Props = {
   workspaces: che.Workspace[];
   isDeleted: string[];
   onAction: (action: WorkspaceAction, id: string) => Promise<string | void>;
+  showConfirmation: (wantDelete: string[]) => Promise<void>;
 };
 type State = {
   filtered: string[]; // IDs of filtered workspaces
@@ -236,10 +237,6 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
         onClick: (event, rowId, rowData) => this.handleAction(WorkspaceAction.STOP_WORKSPACE, rowData)
       },
       {
-        title: 'Add Project',
-        onClick: (event, rowId, rowData) => this.handleAction(WorkspaceAction.ADD_PROJECT, rowData)
-      },
-      {
         title: 'Delete Workspace',
         onClick: (event, rowId, rowData) => this.handleAction(WorkspaceAction.DELETE_WORKSPACE, rowData)
       },
@@ -274,22 +271,56 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
   private async handleAction(action: WorkspaceAction, rowData: IRowData): Promise<void> {
     const id = (rowData as RowData).props.workspaceId;
     try {
+
+      if (action === WorkspaceAction.DELETE_WORKSPACE) {
+        // show confirmation window
+        try {
+          await this.props.showConfirmation([id]);
+        } catch (e) {
+          return;
+        }
+      }
+
       const nextPath = await this.props.onAction(action, id);
       if (!nextPath) {
         return;
       }
       this.props.history.push(nextPath);
     } catch (e) {
-      const message = `Unable to ${action}. ` + e.toString().replace('Error: ', '');
+      const workspace = this.props.workspaces.find(workspace => id === workspace.id);
+      const workspaceName = workspace?.devfile.metadata.name ? ` "${workspace?.devfile.metadata.name}"` : '';
+      const message = `Unable to ${action.toLocaleLowerCase()}${workspaceName}. ` + e.toString().replace('Error: ', '');
       this.showAlert(message);
       console.warn(message);
     }
   }
 
-  private async handleDeleteSelected(): Promise<void> {
-    const promises = this.state.selected.map(async id =>
+  private async handleBulkDelete(): Promise<void> {
+    const { selected } = this.state;
+    const { workspaces } = this.props;
+
+    // show confirmation window
+    try {
+      const wantDelete = selected.map(id => {
+        const workspace = workspaces.find(workspace => id === workspace.id);
+        return workspace?.devfile.metadata.name || id;
+      });
+      await this.props.showConfirmation(wantDelete);
+    } catch (e) {
+      return;
+    }
+
+    const promises = selected.map(async id =>
       this.props.onAction(WorkspaceAction.DELETE_WORKSPACE, id)
         .then(() => id)
+        .catch(reason => {
+          const workspace = this.props.workspaces.find(workspace => id === workspace.id);
+          const workspaceName = workspace?.devfile.metadata.name ? ` "${workspace?.devfile.metadata.name}"` : '';
+          const message = `Unable to delete workspace${workspaceName}. ` + reason.replace('Error: ', '');
+          console.warn(message);
+          this.showAlert(message);
+          return Promise.reject(message);
+        })
     );
 
     try {
@@ -307,7 +338,6 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
           }
         } else {
           rejected += 1;
-          console.warn(`Workspace deletion failed due to ${result.reason}`);
         }
       });
       this.setState({
@@ -426,7 +456,7 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
       selectedAll={isSelectedAll}
       enabledDelete={selected.length !== 0}
       onAddWorkspace={() => this.handleAddWorkspace()}
-      onDeleteSelected={() => this.handleDeleteSelected()}
+      onBulkDelete={() => this.handleBulkDelete()}
       onFilter={filtered => this.handleWorkspacesFilter(filtered)}
       onToggleSelectAll={isSelectedAll => this.handleSelectAll(isSelectedAll)}
     />);

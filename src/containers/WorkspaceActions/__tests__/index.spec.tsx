@@ -13,7 +13,7 @@
 import React from 'react';
 import { Action, Store } from 'redux';
 import { Provider } from 'react-redux';
-import { render, RenderResult, screen } from '@testing-library/react';
+import { render, RenderResult, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import WorkspaceActionsProvider from '../';
 import { WorkspaceAction } from '../../../services/helpers/types';
@@ -42,6 +42,7 @@ describe('Workspace Actions', () => {
 
   const mockOnAction = jest.fn((ctx: ActionContextType, action: WorkspaceAction, id: string) =>
     ctx.handleAction(action, id));
+  const mockOnCancel = jest.fn();
 
   window.console.warn = jest.fn();
 
@@ -81,7 +82,7 @@ describe('Workspace Actions', () => {
 
   });
 
-  describe('using with context provider', () => {
+  describe('using with context provider, handling actions', () => {
 
     function renderComponent(action: WorkspaceAction, id = defaultWorkspaceId) {
       const store = createFakeStore();
@@ -150,6 +151,119 @@ describe('Workspace Actions', () => {
       expect(window.console.warn).toHaveBeenCalledWith(
         expect.stringMatching(/workspace.+?is being deleted/i)
       );
+    });
+
+  });
+
+  describe('using with context provider, confirmation dialog', () => {
+
+    function renderComponent(action: WorkspaceAction, id = defaultWorkspaceId) {
+      const store = createFakeStore();
+      render(
+        <Provider store={store}>
+          <WorkspaceActionsProvider>
+            <WorkspaceActionsConsumer>
+              {context => (
+                <>
+                  <button
+                    onClick={
+                      () => context.showConfirmation([id])
+                        .then(() => mockOnAction(context, action, id))
+                        .catch(() => mockOnCancel())
+                    }
+                  >
+                    {actionButtonName}
+                  </button>
+                  <input
+                    data-testid={valueInputId}
+                    defaultValue={context.isDeleted.join(',')}
+                  />
+                </>
+              )}
+            </WorkspaceActionsConsumer>
+          </WorkspaceActionsProvider>
+        </Provider>
+      );
+    }
+
+    it('should correctly render the confirmation window', async () => {
+      renderComponent(WorkspaceAction.DELETE_WORKSPACE);
+
+      const actionButton = screen.getByRole('button');
+      userEvent.click(actionButton);
+
+      await waitFor(() => expect(screen.queryByRole('dialog', { name: /delete workspaces confirmation/i})).toBeTruthy());
+
+      const closeButton = screen.queryByRole('button', { name: 'Close' });
+      expect(closeButton).toBeTruthy();
+      expect(closeButton).toBeEnabled();
+
+      const cancelButton = screen.queryByRole('button', { name: 'Cancel' });
+      expect(cancelButton).toBeTruthy();
+      expect(cancelButton).toBeEnabled();
+
+      const deleteButton = screen.queryByRole('button', { name: 'Delete' });
+      expect(deleteButton).toBeTruthy();
+      expect(deleteButton).toBeDisabled();
+
+      const confirmationCheckbox = screen.queryByRole('checkbox', { name: /i understand/i });
+      expect(confirmationCheckbox).toBeTruthy();
+      expect(confirmationCheckbox).not.toBeChecked();
+    });
+
+    it('should handle click on "Close" button', async () => {
+      renderComponent(WorkspaceAction.DELETE_WORKSPACE);
+
+      const actionButton = screen.getByRole('button');
+      userEvent.click(actionButton);
+
+      await waitFor(() => expect(screen.queryByRole('dialog', { name: /delete workspaces confirmation/i})).toBeTruthy());
+
+      const closeButton = screen.getByRole('button', { name: 'Close' });
+      userEvent.click(closeButton);
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeFalsy());
+      
+      expect(mockOnCancel).toBeCalled();
+      expect(mockOnAction).not.toBeCalled();
+    });
+
+    it('should handle click on "Cancel" button', async () => {
+      renderComponent(WorkspaceAction.DELETE_WORKSPACE);
+
+      const actionButton = screen.getByRole('button');
+      userEvent.click(actionButton);
+
+      await waitFor(() => expect(screen.queryByRole('dialog', { name: /delete workspaces confirmation/i})).toBeTruthy());
+
+      const cancelButton = screen.getByRole('button', { name: 'Cancel' });
+      userEvent.click(cancelButton);
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeFalsy());
+      
+      expect(mockOnCancel).toBeCalled();
+      expect(mockOnAction).not.toBeCalled();
+    });
+
+    it('should handle click on "Delete" button', async () => {
+      renderComponent(WorkspaceAction.DELETE_WORKSPACE);
+
+      const actionButton = screen.getByRole('button');
+      userEvent.click(actionButton);
+
+      await waitFor(() => expect(screen.queryByRole('dialog', { name: /delete workspaces confirmation/i})).toBeTruthy());
+
+      const confirmationCheckbox = screen.getByRole('checkbox', { name: /i understand/i });
+      userEvent.click(confirmationCheckbox);
+
+      const deleteButton = screen.getByRole('button', { name: 'Delete' });
+      expect(deleteButton).toBeEnabled();
+      userEvent.click(deleteButton);
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeFalsy());
+      
+      expect(mockOnCancel).not.toBeCalled();
+      expect(mockOnAction).toBeCalled();
     });
 
   });
