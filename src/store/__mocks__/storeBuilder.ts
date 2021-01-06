@@ -64,6 +64,10 @@ export class FakeStoreBuilder {
       isLoading: false,
       namespaces: [],
     } as InfrastructureNamespaceState,
+    userPreferences: {
+      isLoading: false,
+      preferences: {}
+    },
   };
 
   public withBranding(branding: BrandingData, isLoading = false): FakeStoreBuilder {

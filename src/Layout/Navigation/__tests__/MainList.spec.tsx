@@ -36,7 +36,7 @@ describe('Navigation Main List', () => {
     renderComponent();
 
     const navLinks = screen.getAllByRole('link');
-    expect(navLinks.length).toEqual(2);
+    expect(navLinks.length).toEqual(3);
   });
 
   it('should have correct navigation item labels', () => {

@@ -13,6 +13,7 @@
 import React from 'react';
 import { NavList } from '@patternfly/react-core';
 import {
+  CogIcon,
   CubesIcon,
   PlusIcon,
 } from '@patternfly/react-icons';
@@ -26,6 +27,7 @@ import styles from './index.module.css';
 const items: NavigationItemObject[] = [
   { to: ROUTE.GET_STARTED, label: 'Get Started Page', icon: <PlusIcon className={styles.mainItemIcon} /> },
   { to: ROUTE.WORKSPACES, label: 'Workspaces', icon: <CubesIcon className={styles.mainItemIcon} /> },
+  // { to: ROUTE.ADMINISTRATION, label: 'Administration', icon: <CogIcon className={styles.mainItemIcon} /> },
 ];
 
 function NavigationMainList(props: { activePath: string }): React.ReactElement {

@@ -10,6 +10,7 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
+import { History } from 'history';
 import React from 'react';
 import gravatarUrl from 'gravatar-url';
 import {
@@ -25,10 +26,11 @@ import {
   DropdownToggle,
   PageHeaderTools,
   PageHeaderToolsGroup,
-  PageHeaderToolsItem,
+  PageHeaderToolsItem, Title,
 } from '@patternfly/react-core';
 import { connect, ConnectedProps } from 'react-redux';
 import { container } from '../../../inversify.config';
+import { ROUTE } from '../../../route.enum';
 import { AppAlerts } from '../../../services/alerts/appAlerts';
 import { CheCliTool } from '../../../services/bootstrap/branding.constant';
 import { AlertItem } from '../../../services/helpers/types';
@@ -44,6 +46,7 @@ import './HeaderTools.styl';
 type Props =
   MappedProps
   & {
+    history: History;
     onCopyLoginCommand?: () => void;
     user: che.User | undefined;
     logout: () => void;
@@ -202,6 +205,15 @@ export class HeaderTools extends React.PureComponent<Props, State> {
           onClick={async () => await this.onCopyLoginCommand()}
         >
           {`Copy ${this.getCliTool()} login command`}
+        </DropdownItem>
+      ),
+      (
+        <DropdownItem
+          key='user-preferences'
+          component='button'
+          onClick={() => this.props.history.push(ROUTE.USER_PREFERENCES)}
+        >
+          User Preferences
         </DropdownItem>
       ),
       (

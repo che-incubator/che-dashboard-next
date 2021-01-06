@@ -10,6 +10,7 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
+import { createHashHistory } from 'history';
 import React from 'react';
 import { Provider } from 'react-redux';
 import renderer from 'react-test-renderer';
@@ -47,6 +48,7 @@ describe('Page header tools', () => {
   const email = 'johndoe@example.com';
   const name = 'John Doe';
   const store = createStore(cheCliTool);
+  const history = createHashHistory();
   const user = {
     id: 'test-id',
     name: name,
@@ -57,6 +59,7 @@ describe('Page header tools', () => {
   const component = (
     <Provider store={store}>
       <HeaderTools
+        history={history}
         user={user}
         logout={mockLogout}
         changeTheme={mockChangeTheme}

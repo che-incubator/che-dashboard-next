@@ -10,10 +10,12 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
+import { createHashHistory } from 'history';
 import React from 'react';
 import renderer from 'react-test-renderer';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import Header from '..';
+import HeaderTools from '../Tools';
 
 jest.mock(
   '../Tools',
@@ -40,8 +42,10 @@ describe('Page header', () => {
   const helpPath = 'docs/troubleshooting/location';
   const logoUrl = 'branding/logo';
   const isHeaderVisible = true;
+  const history = createHashHistory();
 
   const component = (<Header
+    history={history}
     isVisible={isHeaderVisible}
     helpPath={helpPath}
     logoUrl={logoUrl}
