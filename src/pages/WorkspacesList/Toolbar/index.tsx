@@ -58,7 +58,7 @@ export default class WorkspacesListToolbar extends React.PureComponent<Props, St
           break;
         case 'Escape':
           this.handleFilterChange('');
-          this.props.onFilter([]);
+          this.props.onFilter(this.props.workspaces);
           break;
         default:
           break;

@@ -34,8 +34,8 @@ const brandingData = {
 let workspaces: che.Workspace[];
 let isDeleted: string[];
 
-const mockOnAction = jest.fn().mockResolvedValue('');
-const mockShowConfirmation = jest.fn().mockResolvedValue(undefined);
+const mockOnAction = jest.fn().mockResolvedValue(undefined);
+let mockShowConfirmation = jest.fn().mockResolvedValue(undefined);
 
 describe('Workspaces List Page', () => {
 
@@ -127,9 +127,9 @@ describe('Workspaces List Page', () => {
 
     });
 
-    describe('Delete Button', () => {
+    describe('Bulk Delete Button', () => {
 
-      it('should emit event', async () => {
+      it('should emit event if confirmed', async () => {
         renderComponent();
 
         const deleteSelectedButton = screen.getByRole('button', { name: /delete selected workspaces/i });
@@ -148,6 +148,24 @@ describe('Workspaces List Page', () => {
         expect(mockOnAction).toHaveBeenCalledWith(WorkspaceAction.DELETE_WORKSPACE, workspaces[0].id);
         expect(mockOnAction).toHaveBeenCalledWith(WorkspaceAction.DELETE_WORKSPACE, workspaces[1].id);
         expect(mockOnAction).toHaveBeenCalledWith(WorkspaceAction.DELETE_WORKSPACE, workspaces[2].id);
+      });
+
+      it('should not emit event if not confirmed', async () => {
+        mockShowConfirmation = jest.fn().mockRejectedValue(undefined);
+        renderComponent();
+
+        const deleteSelectedButton = screen.getByRole('button', { name: /delete selected workspaces/i });
+
+        const checkboxes = screen.getAllByRole('checkbox', { name: '' });
+
+        userEvent.click(checkboxes[0]);
+        userEvent.click(checkboxes[1]);
+        userEvent.click(checkboxes[2]);
+
+        expect(deleteSelectedButton).toBeEnabled();
+        userEvent.click(deleteSelectedButton);
+
+        await waitFor(() => expect(mockOnAction).not.toHaveBeenCalled());
       });
 
     });

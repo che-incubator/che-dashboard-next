@@ -144,7 +144,7 @@ describe('Workspaces List Toolbar', () => {
     const escapeKeydown = new KeyboardEvent('keydown', { code: 'Escape', key: 'a' });
     fireEvent(searchbox, escapeKeydown);
 
-    expect(mockOnFilter).toHaveBeenCalledWith([]);
+    expect(mockOnFilter).toHaveBeenCalledWith(workspaces);
   });
 
 });

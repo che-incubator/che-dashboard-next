@@ -13,6 +13,7 @@
 import 'reflect-metadata';
 import React from 'react';
 import {
+  classNames,
   IAction,
   ICell,
   IRow,
@@ -25,7 +26,6 @@ import {
 import { History } from 'history';
 import {
   AlertVariant,
-  Button,
   Divider,
   PageSection,
   PageSectionVariants,
@@ -89,11 +89,12 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
         title: (<span className={styles.nameColumnTitle}>Name</span>),
         dataLabel: 'Name',
       },
-      'Last Accessed',
+      'Last Modified',
       'Project(s)',
       {
         title: '',
         dataLabel: ' ',
+        cellTransforms: [classNames(styles.openIdeCell)],
       }
     ];
 
@@ -158,17 +159,17 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
       </span>
     );
 
-    /* last accessed time */
+    /* last modified time */
     const { created, updated } = workspace.attributes;
-    const lastAccessedMs = parseInt(updated ? updated : created, 10);
-    let lastAccessedDate = '';
-    if (lastAccessedMs) {
+    const lastModifiedMs = parseInt(updated ? updated : created, 10);
+    let lastModifiedDate = '';
+    if (lastModifiedMs) {
       const nowMs = Date.now();
-      // show relative date if last accessed withing an hour
-      if (nowMs - lastAccessedMs < 60 * 60 * 1000) {
-        lastAccessedDate = formatRelativeDate(lastAccessedMs);
+      // show relative date if last modified withing an hour
+      if (nowMs - lastModifiedMs < 60 * 60 * 1000) {
+        lastModifiedDate = formatRelativeDate(lastModifiedMs);
       } else {
-        lastAccessedDate = formatDate(lastAccessedMs);
+        lastModifiedDate = formatDate(lastModifiedMs);
       }
     }
 
@@ -197,7 +198,7 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
     return {
       cells: [
         { title: details },
-        lastAccessedDate,
+        lastModifiedDate,
         projects,
         { title: open },
       ],
@@ -310,18 +311,19 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
       return;
     }
 
-    const promises = selected.map(async id =>
-      this.props.onAction(WorkspaceAction.DELETE_WORKSPACE, id)
-        .then(() => id)
-        .catch(reason => {
-          const workspace = this.props.workspaces.find(workspace => id === workspace.id);
-          const workspaceName = workspace?.devfile.metadata.name ? ` "${workspace?.devfile.metadata.name}"` : '';
-          const message = `Unable to delete workspace${workspaceName}. ` + reason.replace('Error: ', '');
-          console.warn(message);
-          this.showAlert(message);
-          return Promise.reject(message);
-        })
-    );
+    const promises = selected.map(async id => {
+      try {
+        await this.props.onAction(WorkspaceAction.DELETE_WORKSPACE, id);
+        return id;
+      } catch (e) {
+        const workspace = this.props.workspaces.find(workspace => id === workspace.id);
+        const workspaceName = workspace?.devfile.metadata.name ? ` "${workspace?.devfile.metadata.name}"` : '';
+        const message = `Unable to delete workspace${workspaceName}. ` + e.toString().replace('Error: ', '');
+        this.showAlert(message);
+        console.warn(message);
+        throw new Error(message);
+      }
+    });
 
     try {
       const results = await Promise.allSettled(promises);
@@ -345,13 +347,19 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
       });
 
       if (!rejected) {
-        const message = `${promises.length} workspace(s) were deleted successfully.`;
+        const message = promises.length === 1
+          ? 'The workspace was deleted successfully'
+          : `${promises.length} workspaces were deleted successfully.`;
         this.showAlert(message, AlertVariant.success);
-        return;
+      } else if (rejected === promises.length) {
+        const message = 'No workspaces were deleted.';
+        this.showAlert(message, AlertVariant.warning);
+      } else {
+        const message = fulfilled === 1
+          ? `${fulfilled} of ${promises.length} workspaces was deleted.`
+          : `${fulfilled} of ${promises.length} workspaces were deleted. `;
+        this.showAlert(message, AlertVariant.warning);
       }
-
-      const message = `${fulfilled} of ${promises.length} workspace(s) were deleted. `;
-      this.showAlert(message);
     } catch (e) {
       const message = 'Bulk workspaces deletion failed due to ${e}.';
       console.error(message);
@@ -417,11 +425,6 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
     this.props.history.push(path);
   }
 
-  private handleLearnMore(): void {
-    const { workspace: workspacesDocsLink } = this.props.branding.docs;
-    this.props.history.push(workspacesDocsLink);
-  }
-
   public componentDidUpdate(prevProps: Props): void {
     /* Update checkboxes states if workspaces list changes */
     if (prevProps.workspaces.length !== this.props.workspaces.length) {
@@ -448,6 +451,7 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
 
   public render(): React.ReactElement {
     const { workspaces } = this.props;
+    const { workspace: workspacesDocsLink } = this.props.branding.docs;
     const { selected, isSelectedAll } = this.state;
 
     const rows = this.buildRows();
@@ -476,16 +480,15 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
             <Text component={'h1'}>Workspaces</Text>
             <Text component={'p'}>
               A workspace is where your projects live and run.
-              Create workspaces from stacks that define projects, runtimes, and commands.
-              <Button
-                variant="link"
-                icon={<ExternalLinkAltIcon />}
-                iconPosition="right"
-                aria-label="Learn more"
-                onClick={() => this.handleLearnMore()}
+              Create workspaces from stacks that define projects, runtimes, and commands.&emsp;
+              <a
+                href={workspacesDocsLink}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                Learn more
-              </Button>
+                Learn&nbsp;more&nbsp;
+                <ExternalLinkAltIcon />
+              </a>
             </Text>
           </TextContent>
         </PageSection>

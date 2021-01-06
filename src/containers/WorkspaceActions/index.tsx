@@ -113,7 +113,8 @@ export class WorkspaceActionsProvider extends React.Component<Props, State> {
         return buildDetailsPath(workspace, WorkspaceDetailsTab.Devfile);
       case WorkspaceAction.DELETE_WORKSPACE:
         {
-          if (WorkspaceStatus[workspace.status] !== WorkspaceStatus.STOPPED) {
+          if (WorkspaceStatus[workspace.status] !== WorkspaceStatus.STOPPED
+            && WorkspaceStatus[workspace.status] !== WorkspaceStatus.ERROR) {
             throw new Error('Only STOPPED workspaces can be deleted.');
           }
 
@@ -198,7 +199,7 @@ export class WorkspaceActionsProvider extends React.Component<Props, State> {
         confirmationText = 'Would you like to delete selected workspace?';
       }
     } else {
-        confirmationText = `Would you like to delete ${wantDelete.length} workspaces?`;
+      confirmationText = `Would you like to delete ${wantDelete.length} workspaces?`;
     }
 
     const body = (
