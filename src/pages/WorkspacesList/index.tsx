@@ -16,8 +16,9 @@ import {
   classNames,
   IAction,
   ICell,
-  IRow,
   IRowData,
+  sortable,
+  SortByDirection,
   Table,
   TableBody,
   TableHeader,
@@ -31,20 +32,12 @@ import {
   PageSectionVariants,
   Text,
   TextContent,
-  TextVariants,
 } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { BrandingData } from '../../services/bootstrap/branding.constant';
-import { formatDate, formatRelativeDate } from '../../services/helpers/date';
 import { WorkspaceAction, WorkspaceStatus } from '../../services/helpers/types';
 import Head from '../../components/Head';
-import WorkspaceIndicator from '../../components/Workspace/Indicator';
-import {
-  buildDetailsPath,
-  buildGettingStartedPath,
-  buildIdeLoaderPath,
-  toHref
-} from '../../services/helpers/location';
+import { buildGettingStartedPath } from '../../services/helpers/location';
 import { AppAlerts } from '../../services/alerts/appAlerts';
 import getRandomString from '../../services/helpers/random';
 import WorkspacesListToolbar from './Toolbar';
@@ -53,12 +46,7 @@ import { lazyInject } from '../../inversify.config';
 import * as styles from './index.module.css';
 import NoWorkspacesEmptyState from './EmptyState/NoWorkspaces';
 import NothingFoundEmptyState from './EmptyState/NothingFound';
-
-interface RowData extends IRow {
-  props: {
-    workspaceId: string;
-  };
-}
+import { buildRows, RowData } from './rows';
 
 type Props = {
   branding: BrandingData;
@@ -72,6 +60,11 @@ type State = {
   filtered: string[]; // IDs of filtered workspaces
   selected: string[]; // IDs of selected workspaces
   isSelectedAll: boolean;
+  rows: RowData[];
+  sortBy: {
+    index: number;
+    direction: SortByDirection;
+  };
 }
 
 export default class WorkspacesList extends React.PureComponent<Props, State> {
@@ -88,8 +81,13 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
       {
         title: (<span className={styles.nameColumnTitle}>Name</span>),
         dataLabel: 'Name',
+        transforms: [sortable],
       },
-      'Last Modified',
+      {
+        title: 'Last Modified',
+        dataLabel: 'Last Modified',
+        transforms: [sortable],
+      },
       'Project(s)',
       {
         title: '',
@@ -103,6 +101,11 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
       filtered,
       selected: [],
       isSelectedAll: false,
+      rows: [],
+      sortBy: {
+        index: 1,
+        direction: SortByDirection.asc,
+      },
     };
   }
 
@@ -114,101 +117,11 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
     });
   }
 
-  private buildRows(): IRow[] {
-    const { isDeleted, workspaces } = this.props;
-    const { filtered, selected } = this.state;
+  private buildRows(): RowData[] {
+    const { history, isDeleted, workspaces } = this.props;
+    const { filtered, selected, sortBy } = this.state;
 
-    const rows: IRow[] = [];
-    workspaces.forEach(workspace => {
-      // skip workspace that is not match a filter
-      if (filtered.indexOf(workspace.id) === -1) {
-        return;
-      }
-
-      const isSelected = selected.includes(workspace.id);
-      const deleting = isDeleted.includes(workspace.id);
-      try {
-        rows.push(this.buildRow(workspace, isSelected, deleting));
-      } catch (e) {
-        console.warn('Skip workspace: ', e);
-      }
-    });
-    return rows;
-  }
-
-  private buildRow(workspace: che.Workspace, isSelected: boolean, isDeleted: boolean): IRow {
-    if (!workspace.devfile.metadata.name) {
-      throw new Error('Empty workspace name.');
-    }
-    if (!workspace.attributes) {
-      throw new Error('Empty workspace attributes');
-    }
-    if (!workspace.namespace) {
-      throw new Error('Empty namespace');
-    }
-
-    /* workspace status indicator */
-    const statusIndicator = (<WorkspaceIndicator status={workspace.status} />);
-    /* workspace name */
-    const detailsPath = buildDetailsPath(workspace);
-    const detailsLink = toHref(this.props.history, detailsPath);
-    const details = (
-      <span>
-        {statusIndicator}
-        <a href={detailsLink}>{workspace.devfile.metadata.name}</a>
-      </span>
-    );
-
-    /* last modified time */
-    const { created, updated } = workspace.attributes;
-    const lastModifiedMs = parseInt(updated ? updated : created, 10);
-    let lastModifiedDate = '';
-    if (lastModifiedMs) {
-      const nowMs = Date.now();
-      // show relative date if last modified withing an hour
-      if (nowMs - lastModifiedMs < 60 * 60 * 1000) {
-        lastModifiedDate = formatRelativeDate(lastModifiedMs);
-      } else {
-        lastModifiedDate = formatDate(lastModifiedMs);
-      }
-    }
-
-    /* projects list */
-    let projects = '';
-    workspace.devfile.projects?.forEach(project => {
-      const location = project.source.location;
-      const name = project.name;
-      projects += (projects ? ' ' : '') + (location ? location : name);
-    });
-
-    /* Open IDE link */
-    let open: React.ReactElement;
-    if (isDeleted) {
-      open = (
-        <TextContent>
-          <Text component={TextVariants.small}>deleting...</Text>
-        </TextContent>
-      );
-    } else {
-      const openIdePath = buildIdeLoaderPath(workspace);
-      const openIdeLink = toHref(this.props.history, openIdePath);
-      open = <a href={openIdeLink}>Open</a>;
-    }
-
-    return {
-      cells: [
-        { title: details },
-        lastModifiedDate,
-        projects,
-        { title: open },
-      ],
-      props: {
-        workspaceId: workspace.id,
-      },
-      selected: isSelected || isDeleted,
-      disableCheckbox: isDeleted,
-      'aria-label': 'Test label'
-    };
+    return buildRows(history, workspaces, isDeleted, filtered, selected, sortBy);
   }
 
   private actionResolver(rowData: IRowData): IAction[] {
@@ -374,24 +287,29 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
   }
 
   private handleSelectAll(isSelectedAll: boolean): void {
-    if (isSelectedAll) {
-      const selected = this.props.workspaces.map(workspace => workspace.id);
+    const selected = isSelectedAll === false
+      ? []
+      : this.props.workspaces.map(workspace => workspace.id);
+
+    this.setState({
+      selected,
+      isSelectedAll,
+    });
+  }
+
+  private handleSelect(isSelected: boolean, rowIndex: number, rowData?: IRowData): void {
+    const { workspaces } = this.props;
+
+    if (rowIndex === -1) {
+      /* (un)select all */
+      const isSelectedAll = isSelected;
+      const selected = isSelectedAll === false
+        ? []
+        : workspaces.map(workspace => workspace.id);
       this.setState({
         selected,
         isSelectedAll,
       });
-    } else {
-      this.setState({
-        selected: [],
-        isSelectedAll,
-      });
-    }
-  }
-
-  private handleSelect(isSelected: boolean, rowIndex: number, rowData?: IRowData): void {
-    /* (un)select all */
-    if (rowIndex === -1) {
-      this.handleSelectAll(isSelected);
       return;
     }
 
@@ -408,7 +326,7 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
         selected.splice(idx, 1);
       }
     }
-    const isSelectedAll = selected.length !== 0 && selected.length === this.props.workspaces.length;
+    const isSelectedAll = selected.length !== 0 && selected.length === workspaces.length;
     this.setState({
       selected,
       isSelectedAll,
@@ -423,6 +341,15 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
   private handleAddWorkspace(): void {
     const path = buildGettingStartedPath('custom-workspace');
     this.props.history.push(path);
+  }
+
+  private handleSort(event: React.MouseEvent, index: number, direction: SortByDirection): void {
+    this.setState({
+      sortBy: {
+        index,
+        direction,
+      },
+    });
   }
 
   public componentDidUpdate(prevProps: Props): void {
@@ -452,9 +379,9 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
   public render(): React.ReactElement {
     const { workspaces } = this.props;
     const { workspace: workspacesDocsLink } = this.props.branding.docs;
-    const { selected, isSelectedAll } = this.state;
-
+    const { selected, isSelectedAll, sortBy } = this.state;
     const rows = this.buildRows();
+
     const toolbar = (<WorkspacesListToolbar
       workspaces={workspaces}
       selectedAll={isSelectedAll}
@@ -508,6 +435,8 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
             rows={rows}
             variant={TableVariant.compact}
             header={toolbar}
+            sortBy={sortBy}
+            onSort={(event, index, direction) => this.handleSort(event, index, direction)}
           >
             <TableHeader />
             <TableBody />

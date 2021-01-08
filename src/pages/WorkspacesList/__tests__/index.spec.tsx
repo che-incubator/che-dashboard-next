@@ -46,7 +46,7 @@ describe('Workspaces List Page', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   it('should render correctly', () => {
