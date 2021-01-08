@@ -46,7 +46,7 @@ import { lazyInject } from '../../inversify.config';
 import * as styles from './index.module.css';
 import NoWorkspacesEmptyState from './EmptyState/NoWorkspaces';
 import NothingFoundEmptyState from './EmptyState/NothingFound';
-import { buildRows, RowData } from './rows';
+import { buildRows, RowData } from './Rows';
 
 type Props = {
   branding: BrandingData;
