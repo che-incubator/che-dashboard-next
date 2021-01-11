@@ -188,8 +188,10 @@ export default class WorkspacesList extends React.PureComponent<Props, State> {
 
       if (action === WorkspaceAction.DELETE_WORKSPACE) {
         // show confirmation window
+        const workspace = this.props.workspaces.find(workspace => id === workspace.id);
+        const workspaceName = workspace?.devfile.metadata.name || id;
         try {
-          await this.props.showConfirmation([id]);
+          await this.props.showConfirmation([workspaceName]);
         } catch (e) {
           return;
         }
