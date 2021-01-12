@@ -4,6 +4,9 @@ Eclipse Che is a next generation Eclipse IDE. This repository is licensed under 
 
 # Eclipse Che Dashboard
 
+This repository is read-only.
+The code is moved into https://github.com/eclipse/che-dashboard/tree/main-react and eventually will fully replace AngularJS based Dashboard Eclipse Che used to have.
+
 ## Requirements
 
 - Node.js `v10.x.x` and later.
