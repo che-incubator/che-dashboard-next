@@ -9,8 +9,7 @@
 name: Next Dockerimage
 
 on:
-  push:
-    branches: [ master ]
+  workflow_dispatch:
 
 jobs:
 
